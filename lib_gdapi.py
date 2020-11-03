@@ -253,11 +253,12 @@ def main():
     
     return service,service_sheet
 def sheet_update(sheetid,workRange,content):
-    
+    if 'list' not in str(type(content)):
+            content=[content]
     writeData = {}
    
    
-    writeData['values']= [[content]]
+    writeData['values']= content
     writeData['majorDimension']="ROWS"
     writeData['range']= workRange
     
@@ -265,11 +266,12 @@ def sheet_update(sheetid,workRange,content):
     request = service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW',body=writeData )
     response = request.execute()   
 def sheet_append(sheetid,workRange,content):
-    
+    if 'list' not in str(type(content)):
+            content=[content]
     writeData = {}
     
  
-    writeData['values']= [[content]]
+    writeData['values']= content
     writeData['majorDimension']="ROWS"
     writeData['range']= workRange
     
@@ -280,17 +282,56 @@ def sheet_append(sheetid,workRange,content):
 def setsheet(sheet_id):
     sheetid=sheet_id
     return
+class Descriptor:
+    def __get__(self, instance, owner):
+        print(self, instance, owner)
+    def __set__(self, instance, value):
+        print(self, instance, value)
+    def __delete__(self, instance):
+        print(self, instance)
 class Writer:
+    id_=''
     def __init__(self,id_):
         self.id=id_
-    
-    def write(self,workRange,content):
-    
         
+    def add_sheet(newpagename,*args):   #create　new page in exist spreadsheet
+        global id_
+        request_=[{"addSheet":{"properties":{"title": newpagename}}}]
+        if  args:
+            for new_page in args:
+                request_.append({"addSheet":{"properties":{"title": new_page}}})
+        body={"requests":request_}
+        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_,body=body)
+        request.execute()
+   
+    @classmethod    
+    def create(cls,filename,newpagename,*args):  #create　new spreadsheet
+        global id_
+        sheet_page=[{"properties":{"title": newpagename}}]  
+        if  args:
+            for new_page in args:
+                sheet_page.append({"properties":{"title": new_page}})
+        body= {"properties": {"title":filename},"sheets":sheet_page }
+        request = service_sheet.spreadsheets().create(body=body)
+        response=request.execute()
+        
+        
+        id_=response['spreadsheetId']
+        cls.id=id_
+        
+    def copy(self,dst):             # copy a new worksheet from this id in the same sheet
+        body={ 'destination_spreadsheet_id': self.id}
+        
+        request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self.id,sheetId=0,body=body)
+        request.execute()
+    def write(self,workRange,content):
+       
+        if 'list' not in str(type(content)):
+            content=[content]
         writeData = {}
         
      
-        writeData['values']= [[content]]
+        writeData['values']=[content]
         writeData['majorDimension']="ROWS"
         writeData['range']= workRange
     
@@ -309,6 +350,13 @@ if __name__ == '__main__':
      sheet=Writer(sheetid)
      #write('H8','ddseeeeee')
      
-  
+  #  sheet_append(f,"A1:B1",[['abcddeef'],['das']]) #一次寫兩筆資料
+  #  sheet_append(f,"A1:B2",[['1f','22e'],['33','44']]) 一次寫四筆資料
+  #  A1:1f  | B1:22e
+  #  A2:33  | B2:44
+
+  # f='1BP0c4be04rqva7pSfrqGrmBhJwVN7lScxz5mBj3d6dk'
+  # s=Writer(f)
+  # s.write("A1:L1",xx)
      
   
