@@ -252,9 +252,20 @@ def main():
    
     
     return service,service_sheet
-
-def write(sheetid,workRange,content):
-    sheet = service_sheet.spreadsheets()
+def sheet_update(sheetid,workRange,content):
+    
+    writeData = {}
+   
+   
+    writeData['values']= [[content]]
+    writeData['majorDimension']="ROWS"
+    writeData['range']= workRange
+    
+    
+    request = service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW',body=writeData )
+    response = request.execute()   
+def sheet_append(sheetid,workRange,content):
+    
     writeData = {}
     
  
@@ -264,8 +275,29 @@ def write(sheetid,workRange,content):
     
    
     
-    request = service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW',body=writeData )
+    request = service_sheet.spreadsheets().values().append(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=writeData )
     response = request.execute()
+def setsheet(sheet_id):
+    sheetid=sheet_id
+    return
+class Writer:
+    def __init__(self,id_):
+        self.id=id_
+    
+    def write(self,workRange,content):
+    
+        
+        writeData = {}
+        
+     
+        writeData['values']= [[content]]
+        writeData['majorDimension']="ROWS"
+        writeData['range']= workRange
+    
+   
+    
+        request = service_sheet.spreadsheets().values().update(spreadsheetId=self.id, range=workRange,valueInputOption='RAW', body=writeData )
+        response = request.execute()
 service,service_sheet = main()
 if __name__ == '__main__':
      service,service_sheet = main()
@@ -274,8 +306,8 @@ if __name__ == '__main__':
    
     # sheetid=create_newsheet("HI")
      sheetid='18i20TCq8ujAELdMTCmZpazXIVBwIX02_6SeAHYl7pMs'
-     
-     write(sheetid,'H7','123HI')
+     sheet=Writer(sheetid)
+     #write('H8','ddseeeeee')
      
   
      
