@@ -29,17 +29,7 @@ def get_minitype_txt_todict(f=r'mimetype.txt'):# get mimetype dict from  txt
                         bb=bb.replace("'",'').replace(",",'').strip()
                         dict_mime[bb]=aa
     return dict_mime
-def get_dict(dict_form):
-    
-    newdict={}
-    # dict_form={'a':'b'} , this fun will return a dict
-    split1=dict_form.split(',')
-    for i in split1:
-            a,b=i.split(':')
-            a=a.replace('{','').replace("'",'')
-            b=b.replace('{','').replace("'",'')
-            newdict[a]=b
-    return newdict
+
     
 
 def find_folder():
@@ -109,8 +99,8 @@ def download(file,dst):
         with io.open(filepath,'wb') as f:
             fh.seek(0)
             f.write(fh.read())
-def change_permissions():# 將某ID的檔案權限更改
-    service.permissions().create(fileId='1wgobAC45IMM-TUE58fO1P8D8_FURMXyLjRXzPaKI_pQ',
+def change_permissions(file_id):# 將某ID的檔案權限更改
+    service.permissions().create(fileId=file_id,
                                          body= {
                                         'role': 'writer',
                                         'type': 'anyone',
@@ -122,14 +112,11 @@ def create_newsheet(filename):
     'name': filename,
     'mimeType': 'application/vnd.google-apps.spreadsheet'
     }
-   
+    
     file = service.files().create(body=file_metadata).execute()
-def upload(filename,file_type):
-    file_metadata = {'name': filename}
-    media = MediaFileUpload(filename, mimetype=file_type)
-    file = service.files().create(body=file_metadata,
-                                        media_body=media,
-                                        fields='id').execute()
+    
+    return file['id']
+
 def find_folder_id(foldername):
       results = service.files().list(q="mimeType='application/vnd.google-apps.folder'",
                                           spaces='drive',
@@ -177,7 +164,7 @@ def upload_file(filepath,dstpath):# 上傳檔案到特地資料夾
         if Extension in mimetype_dict:
             file_type=mimetype_dict[Extension]
     else:
-        print("Mimetype not found , try to upload to this folder")
+        print("Mimetype not found , try to upload this folder")
         foldername=os.path.basename(dstpath)
         filename=os.path.basename(filepath)
         Extension=os.path.splitext(filename)[-1].replace('.','')
@@ -212,20 +199,28 @@ def upload_file(filepath,dstpath):# 上傳檔案到特地資料夾
     file = service.files().create(body=file_metadata,
                                         media_body=media,
                                         fields='id').execute()
-    print("Finish !")
+    print("Upload Finish !")
 def delete_file(filename):
   file_id=find_file(filename)
+  if not file_id:
+      print("Not found file to delete")
+      return
   """Permanently delete a file, skipping the trash
 
   Args:
     service: Drive API service instance.
     file_id: ID of the file to delete.
   """
+  file_=service.files().get(fileId=file_id).execute()
+  print("Delete: ",file_['name'])
   try:
         service.files().delete(fileId=file_id).execute()
   except :
       print("Delete Error")
-    
+def get_():
+    # fields = get what you want
+    # file resource url=https://developers.google.com/drive/api/v3/reference/files
+    results = service.files().get(fileId=fileid,fields='webViewLink').execute()
 def main():
     """Shows basic usage of the Drive v3 API.
     Prints the names and ids of the first 10 files the user has access to.
@@ -250,35 +245,60 @@ def main():
             pickle.dump(creds, token)
 
     service = build('drive', 'v3', credentials=creds)
-    
-
+    service_sheet = build('sheets', 'v4', credentials=creds)
+         
+ 
     # Call the Drive v3 API#
    
     
-    return service
-
+    return service,service_sheet
+def sheet_update(sheetid,workRange,content):
+    sheet = service_sheet.spreadsheets()
+    writeData = {}
+   
+   
+    writeData['values']= [[content]]
+    writeData['majorDimension']="ROWS"
+    writeData['range']= workRange
+    
+    
+    request = service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW',body=writeData )
+    response = request.execute()   
+def sheet_append(sheetid,workRange,content):
+    sheet = service_sheet.spreadsheets()
+    writeData = {}
+    
+ 
+    writeData['values']= [[content]]
+    writeData['majorDimension']="ROWS"
+    writeData['range']= workRange
+    
+   
+    
+    request = service_sheet.spreadsheets().values().append(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=writeData )
+    response = request.execute()
+def write(sheetid,workRange,content):
+    sheet = service_sheet.spreadsheets()
+    writeData = {}
+    
+ 
+    writeData['values']= [[content]]
+    writeData['majorDimension']="ROWS"
+    writeData['range']= workRange
+    
+   
+    
+    request = service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', body=writeData )
+    response = request.execute()   
 if __name__ == '__main__':
-     service = main()
-
-   # = Upload =
-   
-    # src=r'D:\Python\All_Practice\GoogleAPI\test/test.txt'
-    # dst='test.txt'
-    
-    # upload_file(src,dst)# src /to dst (若沒給會自動偵測)//資料夾ID
-    
-   # = download =
-   
-     file_='爽的餒'
-     dst=r'D:\Python\All_Practice\GoogleAPI\test'
-     download(file_,dst)
+     service,service_sheet = main()
      
-   # = delete =
-     #delete_file(filename)
-   
    # = create sheet =
    
-    # create_newsheet("HI信登")
+    # sheetid=create_newsheet("HI")
+     sheetid='18i20TCq8ujAELdMTCmZpazXIVBwIX02_6SeAHYl7pMs'
+     
+     write(sheetid,'H7','123HI')
      
   
      
