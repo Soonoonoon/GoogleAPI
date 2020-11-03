@@ -6,6 +6,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
+import re
 # If modifying these scopes, delete the file token.pickle.
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -46,7 +47,7 @@ def find_folder():
                                           spaces='drive',
                                           fields='nextPageToken, files(id, name)',
                                           pageToken=None).execute()
-dict_all={}
+
 def find_file(filename):
       
       results = service.files().list(     pageSize=1000,
@@ -56,6 +57,7 @@ def find_file(filename):
       
       items = results.get('files', [])
      
+      
       if not items:return 0
       
       for item in items:
@@ -65,16 +67,35 @@ def find_file(filename):
              if filename==name_:
             
                  return id_
+    #if find nothing
+      for item in items:
+             id_=item['id']
+             name_=item['name']
+             catchname=re.findall(filename,name_,re.IGNORECASE)
+             if catchname:
+                
+                 return id_
       return 0
 def download(file,dst):
     fileid=find_file(file)
+    
     if fileid:
         
-        
-        name_=service.files().get(fileId=fileid).execute()['name']
-        
+        filedict=service.files().get(fileId=fileid).execute()
+        name_=filedict['name']
+        mimeType_=filedict['mimeType']
         print("Download " +name_ )
-        request = service.files().get_media(fileId=fileid)
+        if 'application/vnd.google-apps' in str(mimeType_):
+            if 'spreadsheet' in str(mimeType_):
+                mimeType_='text/csv'
+                name_=name_+'.csv'
+            elif 'document'in str(mimeType_):
+                mimeType_='application/msword'
+                name_=name_+'.csv'
+       
+            request = service.files().export_media(fileId=fileid,mimeType=mimeType_)
+        else:
+            request = service.files().get_media(fileId=fileid)
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, request)
         
@@ -83,8 +104,7 @@ def download(file,dst):
         while not done :
             status, done = downloader.next_chunk()
             print("Download %d%%." % int(status.progress() * 100))
-        if fileid in dict_all:
-            name_,linkk=dict_all[id_]
+        
         filepath=dst+'\\'+name_
         with io.open(filepath,'wb') as f:
             fh.seek(0)
@@ -249,9 +269,9 @@ if __name__ == '__main__':
     
    # = download =
    
-     #file_='....txt'
-     #dst=r'D:\Python\All_Practice\GoogleAPI\test'
-     # download(file_,dst)
+     file_='爽的餒'
+     dst=r'D:\Python\All_Practice\GoogleAPI\test'
+     download(file_,dst)
      
    # = delete =
      #delete_file(filename)
