@@ -31,4 +31,4 @@ sheet.title="newtitle"
 
 # rename workbookdsheet
 
-sheet.resubtitle=("oldtitle","newtitle")
+sheet.resubtitle("oldtitle","newtitle")
