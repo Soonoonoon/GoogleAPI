@@ -200,7 +200,7 @@ def upload_file(filepath,dstpath):# 上傳檔案到特地資料夾
                                         media_body=media,
                                         fields='id').execute()
     print("Upload Finish !")
-def delete_file(filename):
+def delete(filename):
   file_id=find_file(filename)
   if not file_id:
       print("Not found file to delete")
@@ -282,18 +282,48 @@ def sheet_append(sheetid,workRange,content):
 def setsheet(sheet_id):
     sheetid=sheet_id
     return
-class Descriptor:
-    def __get__(self, instance, owner):
-        print(self, instance, owner)
-    def __set__(self, instance, value):
-        print(self, instance, value)
-    def __delete__(self, instance):
-        print(self, instance)
+
 class Writer:
-    id_=''
-    def __init__(self,id_):
-        self.id=id_
+    
+    def __init__(self,idin):
+        global id_
+        self._id=idin
+        id_=idin
+        self.getsheet()
         
+       
+    @property
+    def id(self):
+        return self._id
+    @property
+    def url(self):
+        return self._url
+    @property
+    def properties(self):
+        return self._properties
+    @property
+    def sub(self):
+        return self._sub
+    def getsheet(self):
+            global id_
+            
+            request = service_sheet.spreadsheets().get(spreadsheetId=id_, includeGridData=False)
+            response=request.execute()
+            self._sub={}
+            for i in response['sheets']:
+                eachtitle=i['properties']['title']
+                eachid=i['properties']['sheetId']
+                eachindex=i['properties']['index']
+                self._sub[eachindex]=eachid,eachtitle
+                #self._sub[eachindex].title= eachtitle
+                #self._sub[eachindex].id   = eachid
+                #names = locals()
+                #self.+names[self+]=564
+            self._title=response['properties']['title']
+            self._url=response['spreadsheetUrl']
+            self._properties=response['properties']
+       #except Exception as Err:
+         #   if 'was not found' in str(Err):return
     def add_sheet(newpagename,*args):   #create　new page in exist spreadsheet
         global id_
         request_=[{"addSheet":{"properties":{"title": newpagename}}}]
@@ -303,7 +333,49 @@ class Writer:
         body={"requests":request_}
         request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_,body=body)
         request.execute()
-   
+    @property
+    def title(self):
+        return self._title
+    @title.setter
+    def title(self,newname):
+        
+        self._title=newname
+        self.rename_sheet(newname)
+    @property
+    def subtitle(self):
+        return self._title
+    @title.setter
+    def title(self,newname,*args):
+        
+        self._title=newname
+        self.rename_sheet(newname)
+    def resubtitle(self,newname,args): 
+        if args:
+            oldname=newname
+            newname=args
+            for j in self.sub:
+                sheetId,searname=self.sub[j]
+                if oldname==searname:
+                   
+                  self.rename_workbook(sheetId,newname)
+                  return
+    def rename_sheet(self,newtitle):
+        body={"requests":[{
+            "updateSpreadsheetProperties":{
+                "properties":{
+                    "title": newtitle},
+                    "fields": '*'}
+              }]
+             }
+        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_ ,body=body)
+        request.execute()
+    def rename_workbook(self,sheetId,newname):
+        body={"requests":[{
+            "updateSheetProperties":{
+                "properties":{
+                    "sheetId":sheetId,"title": newname},"fields": 'title'}}]}
+        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_ ,body=body)
+        request.execute()
     @classmethod    
     def create(cls,filename,newpagename,*args):  #create　new spreadsheet
         global id_
@@ -318,8 +390,9 @@ class Writer:
         
         id_=response['spreadsheetId']
         cls.id=id_
-        
-    def copy(self,dst):             # copy a new worksheet from this id in the same sheet
+        cls.getsheet(cls)
+    
+    def copy(self,dst):             # copy a new workbook in exist spreadsheet
         body={ 'destination_spreadsheet_id': self.id}
         
         request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self.id,sheetId=0,body=body)
@@ -330,7 +403,7 @@ class Writer:
             content=[content]
         writeData = {}
         
-     
+        
         writeData['values']=[content]
         writeData['majorDimension']="ROWS"
         writeData['range']= workRange
@@ -346,7 +419,7 @@ if __name__ == '__main__':
    
     # sheetid=create_newsheet("HI")
      sheetid='18i20TCq8ujAELdMTCmZpazXIVBwIX02_6SeAHYl7pMs'
-     sheet=Writer(sheetid)
+     #sheet=Writer(sheetid)
      #write('H8','ddseeeeee')
      
   #  sheet_append(f,"A1:B1",[['abcddeef'],['das']]) #一次寫兩筆資料
