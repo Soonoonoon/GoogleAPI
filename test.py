@@ -1,17 +1,28 @@
 import gdapi
 import time
+# Drive_1=gdapi.Drive(r'D:\Python\All_Practice\GoogleAPI\token\mnbbtoken.pickle')
+Drive_1=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,etc...
 
-
+# if you want to change Drive_1 variable to use another Credential
+# use >> Drive_1.chose_json(path) or Drive_1.chose_pickle(path)
 # if you want to create a new sheet
 
-file_id=gdapi.create_newsheet("new_sheet_name") # get a name of new_sheet_name Sheet
+file_id=Drive_1.create_newsheet("new_sheet_name") # get a name of new_sheet_name Sheet
 
 # change permission
 
-gdapi.change_permissions(file_id) # 
+Drive_1.change_permissions(file_id) #
+# upload
+Drive_1.upload(filename,dstfolder) # dstfolder can also set a filepath or not set
+
+# download
+Drive_1.download(filename,dstfolder) # dstfolder can also set a filepath
+
+# delete
+Drive_1.delete(filename,dstfolder) # dstfolder can also set a filepath 
 
 # Write Sheet
-sheet=gdapi.Writer(file_id)
+sheet=Drive_1.Writer(file_id)
 
 sheet.write('B5','In new_sheet_name, Hi this is B5')
 sheet.write("workbookname!A1:L1",['xuyy','xuyy','xuyy','xuyy','xuyy','xuyy',])#workbookname namechose
