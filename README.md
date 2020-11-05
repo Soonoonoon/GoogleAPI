@@ -27,8 +27,10 @@ How to use Google Sheet and Google Drive API
 ## Create new sheet
     Drive.create_newsheet('sheetname')
 ## Change permissions
-    webViewLink=Drive.change_permissions(file_id) # change permission to anyone can write and read , return a webViewLink
-      
+    Link=Drive.change_permissions(file_id) # change permission to anyone can write and read , return a webViewLink
+## Get webViewLink  
+    webViewLink=Drive.get_weblink(file_id)
+   
 ## Sheet
     sheet=Drive.Writer(sheetid)  # if no sheetid it will create a newsheet 
     
