@@ -10,7 +10,7 @@ file_id=gdapi.create_newsheet("new_sheet_name") # get a name of new_sheet_name S
 
 gdapi.change_permissions(file_id) # 
 
-# Write Sheet  # if use the gspread the write method equal update   > sheet.write == sheet.update
+# Write Sheet
 sheet=gdapi.Writer(file_id)
 
 sheet.write('B5','In new_sheet_name, Hi this is B5')
@@ -30,7 +30,16 @@ for i in range(0,len(arr)):
     # A2 = def
     # A3 = g
     # A4 = ad
-    
+# If write across row data method2
+
+arr=[['abc','def','g'],['ad','ee','bb']]
+
+
+sheet.write("A1:C2",arr)
+    # A1 = abc  B1=def C1=g
+    # A2 = def  B2=ee  C2=bb
+   
+        
 # Create sheet method 2
 sheet=gdapi.Writer
 sheet.create("filename","workbook1","workbook2")# create a [filename ]sheet, workbook1 , workbook2, will under the page ,be newpage
