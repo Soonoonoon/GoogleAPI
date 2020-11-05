@@ -2,7 +2,7 @@ import gdapi
 import time
 # Drive_1=gdapi.Drive(r'D:\Python\All_Practice\GoogleAPI\token\mnbbtoken.pickle')
 Drive_1=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,etc...
-
+if Drive_1:
 # if you want to change Drive_1 variable to use another Credential
 # use >> Drive_1.chose_json(path) or Drive_1.chose_pickle(path)
 # if you want to create a new sheet
@@ -30,7 +30,14 @@ Drive_1=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,et
     Link=Drive.change_permissions(file_id) # change permission to anyone can write and read , return a webViewLink
 ## Get webViewLink  
     webViewLink=Drive.get_weblink(file_id)
-
+## Get size
+    size=Drive.get_size(file_id)               # return size    (string) 
+## Get mimetype
+    type_=Drive.get_type(file_id)              # return type of file
+## Get LastModifyingUser
+    user=Drive.get_lastModifyingUser(file_id)  # return dict of user
+## Get shared state
+    sharestate=Drive.get_shared(file_id)       # return boolean True / False
 
     
 ## Sheet
