@@ -11,7 +11,7 @@ import re
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 #mimetype dict
-PickleFile='token.pickle' # put your pickle path
+PickleFile=r'D:\Python\All_Practice\GoogleAPI\apitesla_token.pickle'
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
 def get_minitype_txt_todict(f=r'mimetype.txt'):# get mimetype dict from  txt
     dict_mime={}
@@ -398,13 +398,18 @@ class Writer:
         request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self.id,sheetId=0,body=body)
         request.execute()
     def write(self,workRange,content):
-       
+        
         if 'list' not in str(type(content)):
             content=[content]
+        
+                  
         writeData = {}
         
-        
-        writeData['values']=[content]
+        if 'list'in str(type(content)):
+              if isinstance(content[0],list):# represent this is 2 dimensional list
+                   writeData['values']=content
+        else:
+                   writeData['values']=[content]
         writeData['majorDimension']="ROWS"
         writeData['range']= workRange
     
