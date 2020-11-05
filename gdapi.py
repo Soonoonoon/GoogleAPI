@@ -21,10 +21,19 @@ def format_str(namelimit,name):
 		pass
 	fill_name=namelimit-name_len
 	name_=name+(' '.encode('big5')*fill_name).decode('big5')
-	return name_   
+	return name_
+def size_byte(size):
+        dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
+        dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
+        for i in range(4,0,-1):
+          if size>dict_[i]:
+              return str(size//dict_[i])+'.'+str(size%dict_[i])[:2]+' '+dict_unit[i]
+          if i==1:
+              return str(size)+' Byte'
 class Drive:
     
-   
+    PickleFile=''
+    json_path=''
     def __init__(self,*args):
         if args:
                         if '.json' in str(args):
@@ -32,14 +41,16 @@ class Drive:
                         elif '.pickle' in str(args):
                                 self.chose_pickle(args[0])
                         else:
-                            self.main()
+                            service,service_sheet=self.main()
     def chose_json(self,path):
         global json_path,service,service_sheet
         json_path=path
         service,service_sheet=self.main()
+        self.json_path=path
     def chose_pickle(self,path):
             global PickleFile,service,service_sheet
             PickleFile=path
+            self.PickleFile=path
             service,service_sheet=self.main()
     def emptytrash(self):
         service.files().emptyTrash().execute()        
@@ -157,7 +168,9 @@ class Drive:
                 fh.seek(0)
                 f.write(fh.read())
     def download(self,file,dst):
-        if not dst:print("dstpath not found")
+        if not dst:
+            print("dstpath not found")
+            return
 
         dict_of_find=self.find_file(file,1)
         temp_dict={}
@@ -172,7 +185,7 @@ class Drive:
                             if 'folder' in str(mimetype_):
                                 list_files=self.listdir(i)
                                 size=self.get_size(i)
-                                print(str(count)+'. ',name_+"  (Folder) :"+"( Total size: "+size+" )")
+                                print(format_str(3,str(count)+'.'),name_+"  (Folder) :"+"( Total size: "+size+" )")
                                
                                 temp_dict[str(count)]=i,name_
                                 count+=1
@@ -180,13 +193,13 @@ class Drive:
                                     if each['id'] in dict_of_find:
                                         
                                         size=self.get_size(each['id'])
-                                        print('╘═'+str(count)+'. ',format_str(40,each['name']),'| Size:',size)
+                                        print('╘═'+format_str(3,str(count)+'.'),format_str(40,each['name']),'| Size:',size)
                                         alreadyprint.append(each['id'])
                                         temp_dict[str(count)]=each['id'],each['name']
                                         count+=1
                             else:
                                 size=self.get_size(i)
-                                print(str(count)+'. ',format_str(40,name_),'| Size:',size)
+                                print(format_str(3,str(count)+'.'),format_str(40,name_),'| Size:',size)
                             
                                 temp_dict[str(count)]=i,name_
         print("\nIf wnat to download:  1. %s  >> press 1:"%(temp_dict[str(1)][1]),'(* press enter to skip ) ')
@@ -272,7 +285,39 @@ class Drive:
         file = service.files().create(body=file_metadata).execute()
         
         return file['id']
-
+    def create_doc(self,*filename):
+        if not filename:
+            filename="NewDoc"
+        file_metadata = {
+        'name': filename,
+        'mimeType': 'application/vnd.google-apps.document'
+        }
+        
+        file = service.files().create(body=file_metadata).execute()
+        
+        return file['id']
+    def create_Slides(self,*filename):
+        if not filename:
+            filename="NewSlide"
+        file_metadata = {
+        'name': filename,
+        'mimeType': 'application/vnd.google-apps.presentation'
+        }
+        
+        file = service.files().create(body=file_metadata).execute()
+        
+        return file['id']
+    def create_form(self,*filename):
+        if not filename:
+            filename="NewSlide"
+        file_metadata = {
+        'name': filename,
+        'mimeType': 'application/vnd.google-apps.form'
+        }
+        
+        file = service.files().create(body=file_metadata).execute()
+        
+        return file['id']
     def find_folder_id(self,foldername):
           results = service.files().list(q="mimeType='application/vnd.google-apps.folder'"and "trashed=false",
                                       
@@ -301,13 +346,28 @@ class Drive:
             folderID=''
             if dstpath:
                 
-                eachfoldername=os.path.dirname(dstpath[0])
-                folderID=self.find_folder_id(eachfoldername)
-                file_metadata = {
-                'name': foldername,
-                'parents' : [folderID],
-                'mimeType': 'application/vnd.google-apps.folder'
-                }
+                foldername=os.path.dirname(dstpath[0])
+                if not foldername:
+                    foldername=dstpath[0]
+                folderID=self.find_folder_id(foldername)
+                if folderID:
+                    file_metadata = {
+                    'name': foldername,
+                    'parents' : [folderID],
+                    'mimeType': 'application/vnd.google-apps.folder'
+                    }
+                else:
+                     
+                     file_metadata = {
+                    'name': foldername,
+                   
+                    'mimeType': 'application/vnd.google-apps.folder'
+                     }
+
+                     file = service.files().create(body=file_metadata).execute()
+                     folderID=file['id']
+                     
+            
             if not folderID:
                 
                 
@@ -334,6 +394,7 @@ class Drive:
                 
                 if foldername:# 代表有指定資料夾
                     dstpath=foldername+'/'+i
+                    
                     print("Uploading: ",i)
                     
                     
@@ -413,14 +474,14 @@ class Drive:
                         if 'folder' in str(mimetype_):
                             size=self.get_size(i)
                             list_files=self.listdir(i)
-                            print(str(count)+'. ',name_+"  (Folder) :"+" (Total size: "+size+")")
+                            print(format_str(3,str(count)+'.'),name_+"  (Folder) :"+" (Total size: "+size+")")
                             
                             temp_dict[str(count)]=i,name_
                             count+=1
                             for each in list_files:
                                 if each['id'] in dict_of_find:
                                     size=self.get_size(each['id'])
-                                    print('╘═'+str(count)+'. ',format_str(40,each['name']),'| Size:',size)
+                                    print('╘═'+format_str(3,str(count)+'.'),format_str(40,each['name']),'| Size:',size)
                                     alreadyprint.append(each['id'])
                                     temp_dict[str(count)]=each['id'],each['name']
                                     
@@ -428,7 +489,7 @@ class Drive:
                             
                         else:
                             size=self.get_size(i)
-                            print(str(count)+'. ',format_str(40,name_),'| Size:',size)
+                            print(format_str(3,str(count)+'.'),format_str(40,name_),'| Size:',size)
                         
                             temp_dict[str(count)]=i,name_
       
@@ -443,7 +504,7 @@ class Drive:
                 if str(chose_) in temp_dict:
                     fileid,name_s=temp_dict[str(chose_)]
                     
-                    self.delete_id(fileid,dst)
+                    self.delete_id(fileid)
                  
             return    
         elif ',' in str(chose):
@@ -451,10 +512,10 @@ class Drive:
             for chose_ in file_:
                 if str(chose_) in temp_dict:
                     fileid,name_s=temp_dict[str(chose_)]
-                    self.delete_id(fileid,dst)
+                    self.delete_id(fileid)
             return  
       if not fileid:
-          print("Not found file to delete")
+          
           return
       
       """Permanently delete a file, skipping the trash
@@ -474,27 +535,21 @@ class Drive:
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
         results = service.files().get(fileId=fileid,fields='webViewLink').execute()['webViewLink']
         return results
-    def size_byte(self,size):
+    
+    def get_size(self,fileid,*arg):
         dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
         dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
-        for i in range(4,0,-1):
-          if size>dict_[i]:
-              return str(size//dict_[i])+'.'+str(size%dict_[i])[:2]+' '+dict_unit[i]
-          if i==1:
-              return str(size)+' Byte'
-    def get_size(self,fileid):
         type_=self.get_type(fileid)
         if 'folder' in str(type_):
             sizes=0
             list_files=self.listdir(fileid)
             for j in list_files:
-                size=self.get_size(j['id'])
-                
-                size=re.findall('\d+',size,re.IGNORECASE)[0]                
+                size=self.get_size(j['id'],0)
                 sizes+=int(size)
-            return self.size_byte(sizes)
+            return size_byte(sizes)
         results = service.files().get(fileId=fileid,fields='size').execute()['size']
-        return self.size_byte(int(results))
+        if arg:  return results
+        return size_byte(int(results))
     def get_type(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
