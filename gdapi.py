@@ -42,7 +42,7 @@ class Drive:
                                               
                                               pageToken=None).execute()
 
-    def find_file(self,filename):
+    def find_file(self,filename,*args):
           show_=1
           if args:
                 show_=0  
@@ -87,7 +87,7 @@ class Drive:
           return itemfind,similar
     def download(self,file,dst):
         if not dst:print("dstpath not found")
-        matchlist,similarlist=self.find_file(file)
+        matchlist,similarlist=self.find_file(file,1)
         temp_dict={}
         fileid=0
         count=0
@@ -283,7 +283,7 @@ class Drive:
                                             fields='id').execute()
         print("Upload Finish !")
     def delete(self,filename):
-      matchlist,similarlist=self.find_file(filename)
+      matchlist,similarlist=self.find_file(filename,1)
       temp_dict={}
       fileid=0
       count=0
