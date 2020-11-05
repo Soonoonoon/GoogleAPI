@@ -2,34 +2,41 @@ import gdapi
 import time
 # Drive_1=gdapi.Drive(r'D:\Python\All_Practice\GoogleAPI\token\mnbbtoken.pickle')
 Drive_1=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,etc...
-if Drive_1:
+
 # if you want to change Drive_1 variable to use another Credential
 # use >> Drive_1.chose_json(path) or Drive_1.chose_pickle(path)
 # if you want to create a new sheet
-
+if Drive_1:
+    
 ## Change Crendential
     # You can change different Drive to use or use more than 1 drive at the same time
     
     Drive.chose_json(jsonpath)
-    Drive.chose_pickle(picklepath)    
+    Drive.chose_pickle(picklepath)
+## Set download path
+    Drive.Download_path=yourpath               # set download path, default is argvdirpath
 ## Download
     Drive.download("filename","destination of computer")
 ## Upload
     Drive.upload("filename","destination of drive")
 ## Delete
     Drive.delete("filename")
-## Empty trash
+## Delete Emptyfolder
+    Drive.delete_emptyfolder()
+## Empty trashcan
     Drive.emptytrash()
+## List all file
+    Drive.list_all_file(view=1)# (self,*args,**kwargs) parameters: view=0/1 (list the found file , default 1)
 ## Find file
-    match,similar=Drive_1.find_file(filename) # return 2 list, match = equal filename , similar= similar to filename
+    dict_of_find=Drive_1.find_file(filename)   # return a dict
 ## Find folder
-    folder_id=Drive_1.find_folder_id(folder)  # return Folder id
+    folder_id=Drive_1.find_folder_id(folder)   # return Folder id
 ## Create new sheet
     Drive.create_newsheet('sheetname')
 ## Change permissions
-    Link=Drive.change_permissions(file_id) # change permission to anyone can write and read , return a webViewLink
+    Link=Drive.change_permissions(file_id)     # change permission to anyone can write and read , return a webViewLink
 ## Get webViewLink  
-    webViewLink=Drive.get_weblink(file_id)
+    webViewLink=Drive.get_weblink(file_id)     # return weblink (string) 
 ## Get size
     size=Drive.get_size(file_id)               # return size    (string) 
 ## Get mimetype
@@ -38,8 +45,8 @@ if Drive_1:
     user=Drive.get_lastModifyingUser(file_id)  # return dict of user
 ## Get shared state
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
-
-    
+## Get Filelist
+    Drive.get_filelist()                       # will write a list csv to default path
 ## Sheet
     sheet=Drive.Writer(sheetid)  # if no sheetid it will create a newsheet 
     
