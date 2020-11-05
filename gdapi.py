@@ -292,7 +292,7 @@ class Drive:
                      #folderID=id_
                      return id_
           return 0
-    def upload(self,filepath,*dstpath):# 上傳檔案到特地資料夾
+    def upload(self,filepath,*dstpath):# 上傳檔案到特定資料夾
         filename=''
         foldername=''
         if os.path.isdir(filepath) :
