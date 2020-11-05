@@ -13,7 +13,15 @@ import datetime
 SCOPES = ['https://www.googleapis.com/auth/drive']
 #mimetype dict
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
-   
+def format_str(namelimit,name):
+	name_len=namelimit
+	try:
+		name_len=len(name.encode('big5'))
+	except:
+		pass
+	fill_name=namelimit-name_len
+	name_=name+(' '.encode('big5')*fill_name).decode('big5')
+	return name_   
 class Drive:
     
    
@@ -45,11 +53,10 @@ class Drive:
     def find_file(self,filename,*args):
           show_=1
           if args:
-                show_=0  
+            show_=0  
           results = service.files().list(     q="trashed=false",
                                               pageSize=1000,
                                               fields='files(id, name)',
-                                             
                                               pageToken=None).execute()
           
           
@@ -59,6 +66,7 @@ class Drive:
           if not items:return 0
           itemfind=[]
           similar=[]
+          dict_of_all={}
           for item in items:
                  id_=item['id']
                  name_=item['name']
@@ -68,66 +76,69 @@ class Drive:
                  else:
                      if re.findall(filename,name_,re.IGNORECASE):
                          similar.append(id_)
-          
-          if itemfind and show_:
-            print("找到符合名稱的項目:")
+          if itemfind :
+            if show_:
+              print("找到符合名稱的項目:")
             for i in itemfind:
               filedict=service.files().get(fileId=i).execute()
               name_=filedict['name']
-              print('ID: '+i+" | Name: {:<20}".format(name_))
-          if similar and show_:
-           print("找到相似名稱的項目:")
+              mimetype=filedict['mimeType']
+              dict_of_all[i]=name_,mimetype
+              if show_:print('ID: '+i+" | Name: {:<20}".format(name_))
+          if similar :
+           if show_:print("找到相似名稱的項目:")
            for i in similar:
               filedict=service.files().get(fileId=i).execute()
               name_=filedict['name']
-              print('ID: '+i+" | Name: {:<20}".format(name_))
+              mimetype=filedict['mimeType']
+              dict_of_all[i]=name_,mimetype
+              if show_:print('ID: '+i+" | Name: {:<20}".format(name_))
           if not itemfind and not similar:
               print("找不到項目")
               return 0,0
-          return itemfind,similar
-    def download(self,file,dst):
-        if not dst:print("dstpath not found")
-        matchlist,similarlist=self.find_file(file,1)
-        temp_dict={}
-        fileid=0
-        count=0
-        if matchlist:
-            for i in matchlist:
-                filedict=service.files().get(fileId=i).execute()
-                name_=filedict['name']
-                count+=1
-                print(str(count),'. ',name_)
-                temp_dict[str(count)]=i,name_
-        if similarlist:
-            for i in similarlist:
-                filedict=service.files().get(fileId=i).execute()
-                name_=filedict['name']
-                count+=1
-                print(str(count),'. ',name_)
-                temp_dict[str(count)]=i,name_
+          list_=sorted(dict_of_all.items(),key=lambda b:b[1],reverse=True)
+          
+          dict_of_all={}
+          for i in list_:
+              key,filename_filetype=i
+              filename,filetype=filename_filetype
+              dict_of_all[key]=filename,filetype
+          
+          
+          
+          return dict_of_all
+    def listdir(self,fileid):
+        response=service.files().list(q="'"+str(fileid)+"' in parents",
+                                          fields='files(id, name)',
+                                          ).execute()
+        return response['files']
+    def download_id(self,fileid,dst,*args):
         
-            
-        chose=input("Which one you want to download ( If wnat to download: [ %s ] >> press 1):\n"%(temp_dict[str(1)][1]))
-        if str(chose) in temp_dict:
-            fileid,name_s=temp_dict[str(chose)]
-                
-                
-                
-                
         if fileid:
             
             filedict=service.files().get(fileId=fileid).execute()
             name_=filedict['name']
             mimeType_=filedict['mimeType']
-            print("Download " +name_ )
+            if not args:
+                print("Download " +name_ )
+            if 'folder'in str(mimeType_):
+                list_of_files=self.listdir(fileid)
+                fold_name=dst+'\\'+name_
+                if not os.path.isdir(fold_name):
+                    os.mkdir(fold_name)
+                for each in list_of_files:
+                    
+                    self.download_id(each['id'],fold_name,1)
+                print("Download 100%")
+                return
             if 'application/vnd.google-apps' in str(mimeType_):
                 if 'spreadsheet' in str(mimeType_):
                     mimeType_='text/csv'
                     name_=name_+'.csv'
                 elif 'document'in str(mimeType_):
                     mimeType_='application/msword'
-                    name_=name_+'.csv'
-           
+                    name_=name_+'.docx'
+                
                 request = service.files().export_media(fileId=fileid,mimeType=mimeType_)
             else:
                 request = service.files().get_media(fileId=fileid)
@@ -138,7 +149,106 @@ class Drive:
             done = 0
             while not done :
                 status, done = downloader.next_chunk()
-                print("Download %d%%." % int(status.progress() * 100))
+                if not args:
+                  print("Download %d%%" % int(status.progress() * 100))
+            
+            filepath=dst+'\\'+name_
+            with io.open(filepath,'wb') as f:
+                fh.seek(0)
+                f.write(fh.read())
+    def download(self,file,dst):
+        if not dst:print("dstpath not found")
+
+        dict_of_find=self.find_file(file,1)
+        temp_dict={}
+        fileid=0
+        count=0
+        alreadyprint=[]
+        if dict_of_find:
+                        for i in dict_of_find:
+                            if i in alreadyprint:continue
+                            name_,mimetype_=dict_of_find[i]
+                            count+=1
+                            if 'folder' in str(mimetype_):
+                                list_files=self.listdir(i)
+                                size=self.get_size(i)
+                                print(str(count)+'. ',name_+"  (Folder) :"+"( Total size: "+size+" )")
+                               
+                                temp_dict[str(count)]=i,name_
+                                count+=1
+                                for each in list_files:
+                                    if each['id'] in dict_of_find:
+                                        
+                                        size=self.get_size(each['id'])
+                                        print('╘═'+str(count)+'. ',format_str(40,each['name']),'| Size:',size)
+                                        alreadyprint.append(each['id'])
+                                        temp_dict[str(count)]=each['id'],each['name']
+                                        count+=1
+                            else:
+                                size=self.get_size(i)
+                                print(str(count)+'. ',format_str(40,name_),'| Size:',size)
+                            
+                                temp_dict[str(count)]=i,name_
+        print("\nIf wnat to download:  1. %s  >> press 1:"%(temp_dict[str(1)][1]),'(* press enter to skip ) ')
+        chose=input('[* Chose more than one : press 1~3(chose: 1,2,3) or 1,3,5(chose: 1,3,5)]\n')
+        
+        if str(chose) in temp_dict:
+                fileid,name_s=temp_dict[str(chose)]
+        elif chose:
+            if '~' in str(chose):
+                file_=chose.split('~')
+             
+                for chose_ in range(int(file_[0]),int(file_[-1])+1):
+                    if str(chose_) in temp_dict:
+                        fileid,name_s=temp_dict[str(chose_)]
+                
+                        self.download_id(fileid,dst)
+                     
+                return    
+            elif ',' in str(chose):
+                file_=chose.split(',')
+                for chose_ in file_:
+                    if str(chose_) in temp_dict:
+                        fileid,name_s=temp_dict[str(chose_)]
+                        self.download_id(fileid,dst)
+                return
+                
+        if fileid and 'list' not in str(type(fileid)):
+            
+            filedict=service.files().get(fileId=fileid).execute()
+            name_=filedict['name']
+            mimeType_=filedict['mimeType']
+            
+            print("Download " +name_ )
+            if 'folder'in str(mimeType_):
+                list_of_files=self.listdir(fileid)
+                fold_name=dst+'\\'+name_
+                if not os.path.isdir(fold_name):
+                    os.mkdir(fold_name)
+                for each in list_of_files:
+                    
+                    self.download_id(each['id'],fold_name,1)
+                print("Download 100%")
+                return
+            if 'application/vnd.google-apps' in str(mimeType_):
+                if 'spreadsheet' in str(mimeType_):
+                    mimeType_='text/csv'
+                    name_=name_+'.csv'
+                elif 'document'in str(mimeType_):
+                    mimeType_='application/msword'
+                    name_=name_+'.csv'
+                
+                request = service.files().export_media(fileId=fileid,mimeType=mimeType_)
+            else:
+                request = service.files().get_media(fileId=fileid)
+            fh = io.BytesIO()
+            downloader = MediaIoBaseDownload(fh, request)
+            
+            
+            done = 0
+            while not done :
+                status, done = downloader.next_chunk()
+                print("Download %d%%" % int(status.progress() * 100))
             
             filepath=dst+'\\'+name_
             with io.open(filepath,'wb') as f:
@@ -282,31 +392,67 @@ class Drive:
                                             media_body=media,
                                             fields='id').execute()
         print("Upload Finish !")
+    def delete_id(self,fileid):
+        file_=service.files().get(fileId=fileid).execute()
+        print("Delete: ",file_['name'])
+        try:
+            service.files().delete(fileId=fileid).execute()
+        except :
+          print("Delete Error")
     def delete(self,filename):
-      matchlist,similarlist=self.find_file(filename,1)
+      dict_of_find=self.find_file(filename,1)
       temp_dict={}
       fileid=0
       count=0
-      if matchlist:
-                for i in matchlist:
-                    filedict=service.files().get(fileId=i).execute()
-                    name_=filedict['name']
-                    count+=1
-                    print(str(count),'. ',name_)
-                    temp_dict[str(count)]=i,name_
-      if similarlist:
-                for i in similarlist:
-                    filedict=service.files().get(fileId=i).execute()
-                    name_=filedict['name']
-                    count+=1
-                    print(str(count),'. ',name_)
-                    temp_dict[str(count)]=i,name_
+      alreadyprint=[]
+      if dict_of_find:
+                    for i in dict_of_find:
+                        if i in alreadyprint:continue
+                        name_,mimetype_=dict_of_find[i]
+                        count+=1
+                        if 'folder' in str(mimetype_):
+                            size=self.get_size(i)
+                            list_files=self.listdir(i)
+                            print(str(count)+'. ',name_+"  (Folder) :"+" (Total size: "+size+")")
+                            
+                            temp_dict[str(count)]=i,name_
+                            count+=1
+                            for each in list_files:
+                                if each['id'] in dict_of_find:
+                                    size=self.get_size(each['id'])
+                                    print('╘═'+str(count)+'. ',format_str(40,each['name']),'| Size:',size)
+                                    alreadyprint.append(each['id'])
+                                    temp_dict[str(count)]=each['id'],each['name']
+                                    
+                                    count+=1
+                            
+                        else:
+                            size=self.get_size(i)
+                            print(str(count)+'. ',format_str(40,name_),'| Size:',size)
+                        
+                            temp_dict[str(count)]=i,name_
       
-      
-      chose=input("Which one you want to download ( If wnat to download: [ %s ] >> press 1):\n"%(temp_dict[str(1)][1]))
+      print("\nIf wnat to delete:  1. %s  >> press 1:"%(temp_dict[str(1)][1]),' (* press enter to skip )')
+      chose=input('[* Chose more than one : press 1~3(chose: 1,2,3) or 1,3,5(chose: 1,3,5)]\n')
       if str(chose) in temp_dict:
                 fileid,name_s=temp_dict[str(chose)]
-        
+      elif chose:
+        if '~' in str(chose):
+            file_=chose.split('~')
+            for chose_ in range(int(file_[0]),int(file_[-1])+1):
+                if str(chose_) in temp_dict:
+                    fileid,name_s=temp_dict[str(chose_)]
+                    
+                    self.delete_id(fileid,dst)
+                 
+            return    
+        elif ',' in str(chose):
+            file_=chose.split(',')
+            for chose_ in file_:
+                if str(chose_) in temp_dict:
+                    fileid,name_s=temp_dict[str(chose_)]
+                    self.delete_id(fileid,dst)
+            return  
       if not fileid:
           print("Not found file to delete")
           return
@@ -327,6 +473,42 @@ class Drive:
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
         results = service.files().get(fileId=fileid,fields='webViewLink').execute()['webViewLink']
+        return results
+    def size_byte(self,size):
+        dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
+        dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
+        for i in range(4,0,-1):
+          if size>dict_[i]:
+              return str(size//dict_[i])+'.'+str(size%dict_[i])[:2]+' '+dict_unit[i]
+          if i==1:
+              return str(size)+' Byte'
+    def get_size(self,fileid):
+        type_=self.get_type(fileid)
+        if 'folder' in str(type_):
+            sizes=0
+            list_files=self.listdir(fileid)
+            for j in list_files:
+                size=self.get_size(j['id'])
+                
+                size=re.findall('\d+',size,re.IGNORECASE)[0]                
+                sizes+=int(size)
+            return self.size_byte(sizes)
+        results = service.files().get(fileId=fileid,fields='size').execute()['size']
+        return self.size_byte(int(results))
+    def get_type(self,fileid):
+        # fields = get what you want
+        # file resource url=https://developers.google.com/drive/api/v3/reference/files
+        results = service.files().get(fileId=fileid,fields='mimeType').execute()['mimeType']
+        return results
+    def get_lastModifyingUser(self,fileid):
+        # fields = get what you want
+        # file resource url=https://developers.google.com/drive/api/v3/reference/files
+        results = service.files().get(fileId=fileid,fields='lastModifyingUser').execute()['lastModifyingUser']
+        return results
+    def get_shared(self,fileid):
+        # fields = get what you want
+        # file resource url=https://developers.google.com/drive/api/v3/reference/files
+        results = service.files().get(fileId=fileid,fields='shared').execute()['shared']
         return results
     def main(self):
         """Shows basic usage of the Drive v3 API.
