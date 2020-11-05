@@ -5,6 +5,7 @@ How to use Google Sheet and Google Drive API
 # Function
 
 ## Quickstart
+    # Put gdapi.py into Lib folder
     import gdapi
     Drive=gdapi.Drive(jsonpath or picklepath)
 ## Change Credential
