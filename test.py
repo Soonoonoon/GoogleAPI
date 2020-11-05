@@ -30,6 +30,8 @@ for i in range(0,len(arr)):
     # A2 = def
     # A3 = g
     # A4 = ad
+
+    
 # If write across row data method2
 
 arr=[['abc','def','g'],['ad','ee','bb']]
@@ -38,7 +40,10 @@ arr=[['abc','def','g'],['ad','ee','bb']]
 sheet.write("A1:C2",arr)
     # A1 = abc  B1=def C1=g
     # A2 = def  B2=ee  C2=bb
-   
+
+
+# if write down in one column
+sheet.write('A2:A3',['abb','cc'],1) # set 1 behind data = wirte down along column
         
 # Create sheet method 2
 sheet=gdapi.Writer
