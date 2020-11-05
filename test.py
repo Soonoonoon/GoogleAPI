@@ -1,4 +1,6 @@
 import gdapi
+import time
+
 
 # if you want to create a new sheet
 
@@ -18,6 +20,17 @@ sheet.write("workbookname!A1:L1",['xuyy','xuyy','xuyy','xuyy','xuyy','xuyy',])#w
 arr=['abc','def','g','ad','ee','bb']
 sheet.write("A1:L1",arr) 
 
+# If write across row data
+
+arr=['abc','def','g','ad','ee','bb']
+
+for i in range(0,len(arr)):
+    sheet.write("A"+str(i),arr[i])
+    # A1 = abc
+    # A2 = def
+    # A3 = g
+    # A4 = ad
+    
 # Create sheet method 2
 sheet=gdapi.Writer
 sheet.create("filename","workbook1","workbook2")# create a [filename ]sheet, workbook1 , workbook2, will under the page ,be newpage
@@ -32,3 +45,4 @@ sheet.title="newtitle"
 # rename workbookdsheet
 
 sheet.resubtitle("oldtitle","newtitle")
+
