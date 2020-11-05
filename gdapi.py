@@ -8,11 +8,16 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 import io
 import re
 import datetime
+from  pprint  import pprint
+import sys
 # If modifying these scopes, delete the file token.pickle.
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
+# Download path default
+Download_path=os.path.split(sys.argv[0])[0]
 #mimetype dict
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
+
 def format_str(namelimit,name):
 	name_len=namelimit
 	try:
@@ -25,7 +30,9 @@ def format_str(namelimit,name):
 def size_byte(size):
         dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
         dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
+        size=int(size)
         for i in range(4,0,-1):
+         
           if size>dict_[i]:
               return str(size//dict_[i])+'.'+str(size%dict_[i])[:2]+' '+dict_unit[i]
           if i==1:
@@ -35,6 +42,8 @@ class Drive:
     PickleFile=''
     json_path=''
     def __init__(self,*args):
+        
+        self._download_path=Download_path
         if args:
                         if '.json' in str(args):
                                 self.chose_json(args[0])
@@ -42,6 +51,15 @@ class Drive:
                                 self.chose_pickle(args[0])
                         else:
                             service,service_sheet=self.main()
+    @property
+    def Download_path(self):
+        return self._download_path
+    @Download_path.setter
+    def Download_path(self,setpath):
+         if os.path.exists(setpath):
+           self._download_path=setpath
+         else:
+             print("Path is not exist")
     def chose_json(self,path):
         global json_path,service,service_sheet
         json_path=path
@@ -55,30 +73,26 @@ class Drive:
     def emptytrash(self):
         service.files().emptyTrash().execute()        
     def find_folder(self):
-                results = service.files().list(q="mimeType='application/vnd.google-apps.folder'" and "trashed=false",
+                results = service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                               spaces='drive',
-                                              fields='nextPageToken, files(id, name)',
+                                              fields='nextPageToken,files(ownedByMe,mimeType,id, name)',
                                               
                                               pageToken=None).execute()
-
-    def find_file(self,filename,*args):
+                return results
+    def find_file(self,filename,*args,**kwargs):
           show_=1
           if args:
-            show_=0  
-          results = service.files().list(     q="trashed=false",
-                                              pageSize=1000,
-                                              fields='files(id, name)',
-                                              pageToken=None).execute()
-          
-          
-          items = results.get('files', [])
-         
+            show_=0
+    
+          items=self.list_all_file(**kwargs)          
+                    
           
           if not items:return 0
           itemfind=[]
           similar=[]
           dict_of_all={}
-          for item in items:
+          for __,item in items.items():
+                
                  id_=item['id']
                  name_=item['name']
                  
@@ -106,7 +120,7 @@ class Drive:
               if show_:print('ID: '+i+" | Name: {:<20}".format(name_))
           if not itemfind and not similar:
               print("找不到項目")
-              return 0,0
+              return 0
           list_=sorted(dict_of_all.items(),key=lambda b:b[1],reverse=True)
           
           dict_of_all={}
@@ -167,17 +181,19 @@ class Drive:
             with io.open(filepath,'wb') as f:
                 fh.seek(0)
                 f.write(fh.read())
-    def download(self,file,dst):
+    def download(self,file,*dst):
         if not dst:
-            print("dstpath not found")
-            return
-
-        dict_of_find=self.find_file(file,1)
+            print("Download to default path: "+self._download_path)
+           
+            dst=self._download_path
+        dict_of_find=self.find_file(file,1,view=0)#view= display found file
         temp_dict={}
         fileid=0
         count=0
         alreadyprint=[]
+        
         if dict_of_find:
+                        print("File was found:") 
                         for i in dict_of_find:
                             if i in alreadyprint:continue
                             name_,mimetype_=dict_of_find[i]
@@ -319,7 +335,7 @@ class Drive:
         
         return file['id']
     def find_folder_id(self,foldername):
-          results = service.files().list(q="mimeType='application/vnd.google-apps.folder'"and "trashed=false",
+          results = service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                       
                                               spaces='drive',
                                               
@@ -461,12 +477,13 @@ class Drive:
         except :
           print("Delete Error")
     def delete(self,filename):
-      dict_of_find=self.find_file(filename,1)
+      dict_of_find=self.find_file(filename,1,view=0)#view= display found file
       temp_dict={}
       fileid=0
       count=0
       alreadyprint=[]
       if dict_of_find:
+                    print("\n=== === Files List === ===")
                     for i in dict_of_find:
                         if i in alreadyprint:continue
                         name_,mimetype_=dict_of_find[i]
@@ -627,12 +644,137 @@ class Drive:
         
         request = service_sheet.spreadsheets().values().append(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=writeData )
         response = request.execute()
-    
-    try:
-        service,service_sheet = main()
-    except:
-        pass
-
+    def get_filelist(self):
+        dict_=self.list_all_file(view=0)
+        if dict_:
+          print("Writing down...")
+          print('Download Path: ',self._download_path)
+          with open (self._download_path+'\\File_list.csv','w+',encoding='utf-8-sig')as store_csv:
+           store_csv.write('Name')
+           store_csv.write(',')
+           store_csv.write('ID')
+           store_csv.write(',')
+           store_csv.write('MimeType')
+           store_csv.write(',')
+           store_csv.write('Size')
+           store_csv.write(',')
+           store_csv.write('Link')
+           store_csv.write(',')
+           store_csv.write('LastModifyUser')
+           store_csv.write(',')
+           store_csv.write('Shared')
+           store_csv.write('\n')
+           for __,item in dict_.items():
+                 
+                 id_=item['id']
+                 name_=item['name']
+                 type_=item['mimeType']
+                 if 'size' not in item:
+                     size=''
+                 else:size=item['size']
+                 link=item['webViewLink']
+                 shared=item['shared']
+                 if not shared:
+                     shared="Not shared"
+                 else:
+                     shared="Shared"
+                 user=item['lastModifyingUser']['emailAddress']
+                 sizef=lambda s:'-' if not s else size_byte(s)
+                 store_csv.write(str(name_))
+                 store_csv.write(',')
+                 store_csv.write(str(id_))
+                 store_csv.write(',')
+                 store_csv.write(str(type_))
+                 store_csv.write(',')
+                 store_csv.write(sizef(size))
+                 store_csv.write(',')
+                 store_csv.write(str(link))
+                 store_csv.write(',')
+                 store_csv.write(shared)                 
+                 store_csv.write(',')
+                 store_csv.write(str(user))
+                 store_csv.write('\n')
+    def list_all_file(self,*args,**kwargs):
+         view=1
+         
+         
+         if kwargs:
+             if'view' in kwargs:
+                 if kwargs['view']==0:
+                     view=0
+             if 'dict_all' in (kwargs):
+                 dict_all=kwargs['dict_all']
+             
+         if not args:
+             count=0
+             pageToken=None
+             dict_all={}
+             
+         else:
+           
+             
+             pageToken=args[0]
+             count=args[1]
+         results = service.files().list(
+                                              spaces='drive',
+                                              fields='nextPageToken, files(webViewLink,size,shared,lastModifyingUser,mimeType,ownedByMe,id, name)',
+                                              pageSize=1000,
+                                              pageToken=pageToken).execute()
+         
+         for j in results['files']:
+             count+=1
+             if j['ownedByMe']:
+               
+               if view:print(str(count)+'. '+str(j['name']))
+               dict_all[j['id']]=j
+                 
+         if not results['files'] or 'nextPageToken' not in results:
+             
+             return dict_all
+         
+         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,**kwargs)
+    def delete_emptyfolder(self):
+        result=self.find_folder()
+        emptyfolder={}
+        for each in result['files']:
+          own=each['ownedByMe']
+          if own:
+              
+              list_files=self.listdir(each['id'])
+              if not list_files:
+                  emptyfolder[each['id']]=each
+        count=1
+        if emptyfolder:
+            temp_dict={}
+            print("Find empty folder:")
+        for j in emptyfolder:
+            name=emptyfolder[j]['name']
+            
+            print(format_str(3,str(count)+'.'),format_str(40,name))
+            temp_dict[str(count)]=j
+            count+=1
+        chose=input("If yout want to delete , Press 'Delete' :\n")
+        if 'delete' in str(chose).lower():
+            chose=input("Chose which one to delete , if all Press 'all' :\n")
+            if str(chose) in temp_dict:
+                        fileid=temp_dict[str(chose)]
+            elif chose:
+                if '~' in str(chose):
+                    file_=chose.split('~')
+                    for chose_ in range(int(file_[0]),int(file_[-1])+1):
+                        if str(chose_) in temp_dict:
+                            fileid=temp_dict[str(chose_)]
+                            
+                            self.delete_id(fileid)
+                         
+                    return    
+                elif ',' in str(chose):
+                    file_=chose.split(',')
+                    for chose_ in file_:
+                        if str(chose_) in temp_dict:
+                            fileid,name_s=temp_dict[str(chose_)]
+                            self.delete_id(fileid)
+                    return
 class Writer:
         
         def __init__(self,*id_in):
