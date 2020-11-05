@@ -11,7 +11,16 @@ import re
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 #mimetype dict
-PickleFile=r'D:\Python\All_Practice\GoogleAPI\apitesla_token.pickle'
+PickleFile=''
+json_path=''
+def chose_json(path):
+    global json_path,service,service_sheet
+    json_path=path
+    service,service_sheet=main()
+def chose_pickle(path):
+        global PickleFile,service,service_sheet
+        PickleFile=path
+        service,service_sheet=main()
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
 def get_minitype_txt_todict(f=r'mimetype.txt'):# get mimetype dict from  txt
     dict_mime={}
@@ -233,17 +242,21 @@ def main():
         with open(PickleFile, 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
+    try:
+     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                json_path, SCOPES)
             creds = flow.run_local_server(port=8012)
         # Save the credentials for the next run
         with open(PickleFile, 'wb') as token:
             pickle.dump(creds, token)
-
+    except:
+        print("▲ If you don't set the json or pickle path, plz set the path before use ")
+        print("Use function: \n 1. chose_pickle (pickle_path)\n 2. chose_json   (json_path)")
+        return
     service = build('drive', 'v3', credentials=creds)
     service_sheet = build('sheets', 'v4', credentials=creds)
          
@@ -424,12 +437,14 @@ class Writer:
         request = service_sheet.spreadsheets().values().update(spreadsheetId=self.id, range=workRange,valueInputOption='RAW', body=writeData )
         response = request.execute()   
 if __name__ == '__main__':
+    try:
      service,service_sheet = main()
+    except:pass
      
    # = create sheet =
    
     # sheetid=create_newsheet("HI")
-     sheetid='18i20TCq8ujAELdMTCmZpazXIVBwIX02_6SeAHYl7pMs'
+    sheetid='18i20TCq8ujAELdMTCmZpazXIVBwIX02_6SeAHYl7pMs'
      #sheet=Writer(sheetid)
      #write('H8','ddseeeeee')
      
