@@ -22,15 +22,23 @@ How to use Google Sheet and Google Drive API
 ## Empty trash
     Drive.emptytrash()
 ## Find file
-    match,similar=Drive.find_file(filename) # return 2 list, match = equal filename , similar= similar to filename
+    match,similar=Drive.find_file(filename)    # return 2 list, match = equal filename , similar= similar to filename
 ## Find folder
-    folder_id=Drive.find_folder_id(folder)  # return Folder id
+    folder_id=Drive.find_folder_id(folder)     # return Folder id
 ## Create new sheet
     Drive.create_newsheet('sheetname')
 ## Change permissions
-    Link=Drive.change_permissions(file_id) # change permission to anyone can write and read , return a webViewLink
+    Link=Drive.change_permissions(file_id)     # change permission to anyone can write and read , return a webViewLink
 ## Get webViewLink  
-    webViewLink=Drive.get_weblink(file_id)
+    webViewLink=Drive.get_weblink(file_id)     # return weblink (string) 
+## Get size
+    size=Drive.get_size(file_id)               # return size    (string) 
+## Get mimetype
+    type_=Drive.get_type(file_id)              # return type of file
+## Get LastModifyingUser
+    user=Drive.get_lastModifyingUser(file_id)  # return dict of user
+## Get shared state
+    sharestate=Drive.get_shared(file_id)       # return boolean True / False
    
 ## Sheet
     sheet=Drive.Writer(sheetid)  # if no sheetid it will create a newsheet 
