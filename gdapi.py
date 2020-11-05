@@ -43,7 +43,9 @@ class Drive:
                                               pageToken=None).execute()
 
     def find_file(self,filename):
-          
+          show_=1
+          if args:
+                show_=0  
           results = service.files().list(     q="trashed=false",
                                               pageSize=1000,
                                               fields='files(id, name)',
@@ -66,7 +68,7 @@ class Drive:
                  else:
                      if re.findall(filename,name_,re.IGNORECASE):
                          similar.append(id_)
-          show_=0
+          
           if itemfind and show_:
             print("找到符合名稱的項目:")
             for i in itemfind:
@@ -321,10 +323,10 @@ class Drive:
             service.files().delete(fileId=fileid).execute()
       except :
           print("Delete Error")
-    def service_files_get(self,fileid):
+    def get_weblink(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = service.files().get(fileId=fileid,fields='webViewLink').execute()
+        results = service.files().get(fileId=fileid,fields='webViewLink').execute()['webViewLink']
         return results
     def main(self):
         """Shows basic usage of the Drive v3 API.
