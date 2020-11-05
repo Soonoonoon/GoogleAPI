@@ -7,7 +7,7 @@ How to use Google Sheet and Google Drive API
 ## Quickstart
     import gdapi
     Drive=gdapi.Drive(jsonpath or picklepath)
-## Change Crendential
+## Change Credential
     # You can change different Drive to use or use more than 1 drive at the same time
     
     Drive.chose_json(jsonpath)
