@@ -1,3 +1,3 @@
 # GoogleAPI Git
 
-How to use GOOGLEAPI with Sheet and Drive
+How to use Google Sheet and Google Drive API 
