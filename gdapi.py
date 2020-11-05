@@ -74,13 +74,13 @@ class Drive:
             for i in itemfind:
               filedict=service.files().get(fileId=i).execute()
               name_=filedict['name']
-              print(name_,'| ID: ',i)
+              print('ID: '+i+" | Name: {:<20}".format(name_))
           if similar and show_:
            print("找到相似名稱的項目:")
            for i in similar:
               filedict=service.files().get(fileId=i).execute()
               name_=filedict['name']
-              print(name_,'| ID: ',i)
+              print('ID: '+i+" | Name: {:<20}".format(name_))
           if not itemfind and not similar:
               print("找不到項目")
               return 0,0
