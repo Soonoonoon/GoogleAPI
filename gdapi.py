@@ -33,7 +33,8 @@ class Drive:
             global PickleFile,service,service_sheet
             PickleFile=path
             service,service_sheet=self.main()
-            
+    def emptytrash(self):
+        service.files().emptyTrash().execute()        
     def find_folder(self):
                 results = service.files().list(q="mimeType='application/vnd.google-apps.folder'" and "trashed=false",
                                               spaces='drive',
@@ -86,6 +87,7 @@ class Drive:
         if not dst:print("dstpath not found")
         matchlist,similarlist=self.find_file(file)
         temp_dict={}
+        fileid=0
         count=0
         if matchlist:
             for i in matchlist:
@@ -101,8 +103,10 @@ class Drive:
                 count+=1
                 print(str(count),'. ',name_)
                 temp_dict[str(count)]=i,name_
+        
+            
         chose=input("Which one you want to download ( If wnat to download: [ %s ] >> press 1):\n"%(temp_dict[str(1)][1]))
-        if chose:
+        if str(chose) in temp_dict:
             fileid,name_s=temp_dict[str(chose)]
                 
                 
@@ -295,8 +299,10 @@ class Drive:
                     count+=1
                     print(str(count),'. ',name_)
                     temp_dict[str(count)]=i,name_
+      
+      
       chose=input("Which one you want to download ( If wnat to download: [ %s ] >> press 1):\n"%(temp_dict[str(1)][1]))
-      if chose:
+      if str(chose) in temp_dict:
                 fileid,name_s=temp_dict[str(chose)]
         
       if not fileid:
