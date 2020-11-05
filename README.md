@@ -8,23 +8,29 @@ How to use Google Sheet and Google Drive API
     # Put gdapi.py into Lib folder
     import gdapi
     Drive=gdapi.Drive(jsonpath or picklepath)
-## Change Credential
+## Change Crendential
     # You can change different Drive to use or use more than 1 drive at the same time
     
     Drive.chose_json(jsonpath)
-    Drive.chose_pickle(picklepath)    
+    Drive.chose_pickle(picklepath)
+## Set download path
+    Drive.Download_path=yourpath               # set download path, default is argvdirpath
 ## Download
     Drive.download("filename","destination of computer")
 ## Upload
     Drive.upload("filename","destination of drive")
 ## Delete
     Drive.delete("filename")
-## Empty trash
+## Delete Emptyfolder
+    Drive.delete_emptyfolder()
+## Empty trashcan
     Drive.emptytrash()
+## List all file
+    Drive.list_all_file(view=1)# (self,*args,**kwargs) parameters: view=0/1 (list the found file , default 1)
 ## Find file
-    match,similar=Drive.find_file(filename)    # return 2 list, match = equal filename , similar= similar to filename
+    dict_of_find=Drive_1.find_file(filename)   # return a dict
 ## Find folder
-    folder_id=Drive.find_folder_id(folder)     # return Folder id
+    folder_id=Drive_1.find_folder_id(folder)   # return Folder id
 ## Create new sheet
     Drive.create_newsheet('sheetname')
 ## Change permissions
@@ -39,7 +45,8 @@ How to use Google Sheet and Google Drive API
     user=Drive.get_lastModifyingUser(file_id)  # return dict of user
 ## Get shared state
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
-   
+## Get Filelist
+    Drive.get_filelist()                       # will write a list csv to default path
 ## Sheet
     sheet=Drive.Writer(sheetid)  # if no sheetid it will create a newsheet 
     
@@ -53,7 +60,19 @@ How to use Google Sheet and Google Drive API
     sheet.write("A1:B2",Data,1)  # A1='Hi'  |  B1='am'
                                  # A2='I'   |  B2='Test'
     Data=[1,2,3,4,5,6]                           
-    sheet.write("A1:F1",Data)    # A1=1  |  B1=2 |  C1=3 |  D1=4 |  E1=5 |  F1=6 | 
+    sheet.write("A1:F1",Data)    # A1=1  |  B1=2 |  C1=3 |  D1=4 |  E1=5 |  F1=6 |
+
+    # If write across row data
+
+    arr=['abc','def','g','ad','ee','bb']
+
+    for i in range(0,len(arr)):
+        sheet.write("A"+str(i),arr[i])
+        # A1 = abc
+        # A2 = def
+        # A3 = g
+        # A4 = ad
+
     
     # Add new workbook in exist spreadsheet
     sheet.add_sheet("workbook1","workbook2")
@@ -75,6 +94,4 @@ How to use Google Sheet and Google Drive API
     
     # rename workbookdsheet
     sheet.resubtitle("oldtitle","newtitle")
-
-    
     
