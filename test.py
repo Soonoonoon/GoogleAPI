@@ -10,7 +10,7 @@ file_id=gdapi.create_newsheet("new_sheet_name") # get a name of new_sheet_name S
 
 gdapi.change_permissions(file_id) # 
 
-# Write Sheet
+# Write Sheet  # if use the gspread the write method equal update   > sheet.write == sheet.update
 sheet=gdapi.Writer(file_id)
 
 sheet.write('B5','In new_sheet_name, Hi this is B5')
