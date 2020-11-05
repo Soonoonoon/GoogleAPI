@@ -397,20 +397,26 @@ class Writer:
         
         request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self.id,sheetId=0,body=body)
         request.execute()
-    def write(self,workRange,content):
+    def write(self,workRange,content,*args):
         
+            
+        writeData = {}
         if 'list' not in str(type(content)):
             content=[content]
+            writeData['values']=[content]
         
                   
-        writeData = {}
         
-        if 'list'in str(type(content)):
+        
+        elif 'list'in str(type(content)):
               if isinstance(content[0],list):# represent this is 2 dimensional list
                    writeData['values']=content
-        else:
+              else:
                    writeData['values']=[content]
-        writeData['majorDimension']="ROWS"
+        if args:
+            writeData['majorDimension']="COLUMNS"
+        else:
+            writeData['majorDimension']="ROWS"
         writeData['range']= workRange
     
    
