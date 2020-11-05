@@ -22,9 +22,9 @@ How to use Google Sheet and Google Drive API
 ## Empty trash
     Drive.emptytrash()
 ## Find file
-    match,similar=Drive_1.find_file(filename) # return 2 list, match = equal filename , similar= similar to filename
+    match,similar=Drive.find_file(filename) # return 2 list, match = equal filename , similar= similar to filename
 ## Find folder
-    folder_id=Drive_1.find_folder_id(folder)  # return Folder id
+    folder_id=Drive.find_folder_id(folder)  # return Folder id
 ## Create new sheet
     Drive.create_newsheet('sheetname')
 ## Change permissions
