@@ -130,7 +130,7 @@ How to use Google Sheet and Google Drive API
     #　HexColor      = set color in Hex         | Set  > #CAFFFF    , if set Hexcolor , (R,G,B) can put anything except tuple.
     #  Alpha         = set transparent          | Set  > [0,1]      , default=1
     #  SheetId       = set sheetid              | Set  > long int   , default=0  , the number  in url gid=[sheetid] 
-   ## Adjust_column and row
+   ## Adjust column and row
     Colrange="1:5" # Column A-D =1~4
     Col_pixel= 20  # 20 pixels between  column 
     Rowrange="1:4" # Row= 1~3
