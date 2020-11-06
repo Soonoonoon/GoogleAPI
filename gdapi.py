@@ -775,7 +775,7 @@ class Drive:
                             fileid,name_s=temp_dict[str(chose_)]
                             self.delete_id(fileid)
                     return
-class Writer:
+class Sheet:
         
         def __init__(self,*id_in):
         
@@ -901,7 +901,11 @@ class Writer:
             request.execute()
         def read(self,workRange):
             response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=workRange ).execute()
-            return response.get('valueRanges')[0]['values'][0][0]
+            if len(response.get('valueRanges')[0]['values'][0])==1 and len(response.get('valueRanges')[0]['values'])==1:
+            
+                return response.get('valueRanges')[0]['values'][0][0]
+            else:
+                return response.get('valueRanges')[0]['values']
         def write(self,workRange,content,*args):
             
                 
