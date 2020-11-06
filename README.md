@@ -7,6 +7,10 @@ How to use Google Sheet and Google Drive API
 ## Quickstart
     # Put gdapi.py into Lib folder
     import gdapi
+    
+    # Drive_1=gdapi.Drive(r'D:\Python\All_Practice\GoogleAPI\token\mnbbtoken.pickle')
+    # Before ues API , log in your drive first.
+    # Login Function:
     Drive=gdapi.Drive(jsonpath or picklepath)
 ## Change Crendential
     # You can change different Drive to use or use more than 1 drive at the same time
@@ -47,8 +51,8 @@ How to use Google Sheet and Google Drive API
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
-## Sheet
-    sheet=Drive.Writer(sheetid)  # if no sheetid it will create a newsheet 
+## Sheet #!!! before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
+    sheet=gdapi.Writer(sheetid)  # if no sheetid it will create a newsheet 
     
     Data='Hi'
     sheet.write("A1",Data)  # A1='Hi'
@@ -61,7 +65,8 @@ How to use Google Sheet and Google Drive API
                                  # A2='I'   |  B2='Test'
     Data=[1,2,3,4,5,6]                           
     sheet.write("A1:F1",Data)    # A1=1  |  B1=2 |  C1=3 |  D1=4 |  E1=5 |  F1=6 |
-
+    
+    
     # If write across row data
 
     arr=['abc','def','g','ad','ee','bb']
@@ -72,6 +77,11 @@ How to use Google Sheet and Google Drive API
         # A2 = def
         # A3 = g
         # A4 = ad
+
+    # Read sheet content
+    
+    string=sheet.read("A1")                      # return string
+    list_value=sheet.read("workbook2!:A1:B3")    # return Value list
 
     
     # Add new workbook in exist spreadsheet
@@ -94,4 +104,4 @@ How to use Google Sheet and Google Drive API
     
     # rename workbookdsheet
     sheet.resubtitle("oldtitle","newtitle")
-    
+
