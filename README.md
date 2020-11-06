@@ -37,6 +37,14 @@ How to use Google Sheet and Google Drive API
     folder_id=Drive_1.find_folder_id(folder)   # return Folder id
 ## Create new sheet
     Drive.create_newsheet('sheetname')
+## Create new Sheet
+    Drive.create_newsheet('sheetname')    
+## Create new doc
+    Drive.create_doc('Docname')    
+## Create new Slide
+    Drive.create_Slides('Slidename')
+## Create new Form
+    Drive.create_form('Formname')
 ## Change permissions
     Link=Drive.change_permissions(file_id)     # change permission to anyone can write and read , return a webViewLink
 ## Get webViewLink  
