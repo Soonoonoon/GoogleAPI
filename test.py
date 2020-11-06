@@ -75,6 +75,7 @@ if Drive:
 
     
 # = = = =  Sheet = = = =
+
     #Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
 
     sheet=gdapi.Sheet(sheetid)  # if no sheetid it will create a newsheet
@@ -164,16 +165,20 @@ if Drive:
     # Rename workbookdsheet
     sheet.resubtitle("oldtitle","newtitle")
 
-    # Adjust_column and row
-    Colrange="1:5" # Column A-D =1~4
+    # Adjust_column and row       
+    Colrange="1:5" # Column A-D =1~4    * also accept: "A:D"
     Col_pixel= 20  # 20 pixels between  column 
     Rowrange="1:4" # Row= 1~3
     Row_pixel= 40  # 40 pixels between  row 
     sheetid=0      # default=0
     sheet.adjust_col_row(Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid)
     # Only adjust column
+    Colrange="1:5" # column 1-4    * also accept: "A:D"
+    Col_pixel=40
     sheet.adjust_col(Colrange,Col_pixel,*sheetid)
     # Only adjust row
+    Rowrange="2:4" # row 2-3
+    Row_pixel=40
     sheet.adjust_row(Rowrange,Row_pixel,*sheetid)
         
     # Append Column
@@ -181,4 +186,14 @@ if Drive:
         
     # Append Row
     sheet.append_row(length,*sheetid) #append length row
-            
+
+    # Find and Replace
+    find='string'           #   find     string
+    reapcle='test'          #   replace string
+    find_all_sheet_or_not=0 #   0=find/replace only one page,1=find/replace all page
+    sheet.FNR(find,replace,find_all_sheet_or_not,*sheetid)
+
+    # Sort Data
+    ChoseColumn=1    #  sort column=1 data
+    UpOrDown=0       #  0/1  ( DESCENDING / ASCENDING )
+    sheet.sort(ChoseColumn,UpOrDown)
