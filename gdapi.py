@@ -783,7 +783,11 @@ class Writer:
             if id_in:
                self._id=id_in[0]
                id_=id_in[0]
-               self.getsheet()
+               try:
+                 self.getsheet()
+               except Exception as Err:
+                   if 'not found' in str(Err):
+                       print("Your SheetID was not found")
             else:
                 timenow=datetime.datetime.now().strftime("%H%M%S")
                 self._id=self.create("NewSheet"+str(timenow))
@@ -895,6 +899,9 @@ class Writer:
             
             request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self.id,sheetId=0,body=body)
             request.execute()
+        def read(self,workRange):
+            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=workRange ).execute()
+            return response.get('valueRanges')[0]['values'][0][0]
         def write(self,workRange,content,*args):
             
                 
