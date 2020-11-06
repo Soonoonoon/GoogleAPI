@@ -314,17 +314,45 @@ class Drive:
                                             'type': 'anyone',
                                               }
                                             ).execute()
-    def create_newsheet(self,*filename):
-        if not filename:
-            filename="NewSheet"
-        file_metadata = {
-        'name': filename,
-        'mimeType': 'application/vnd.google-apps.spreadsheet'
-        }
-        
-        file = service.files().create(body=file_metadata).execute()
-        
-        return file['id']
+    def create_newsheet(self,*filename,**folder):
+            if not filename:
+                filename='NewSheet'
+            
+            if folder or len(filename)>1:
+                if len(filename)>1:
+                    foldername=filename[1]
+                elif folder:
+                    foldername=folder['folder']
+                    
+                folderid=self.find_folder_id(foldername)
+                if folderid:
+                    file_metadata = {
+                    
+                    'name': filename,
+                    'parents':[folderid],
+                    'mimeType': 'application/vnd.google-apps.spreadsheet'
+                    }
+                    file = service.files().create(body=file_metadata).execute()
+                   
+                    return file['id']
+                else:
+                    folderid=self.mkdir(foldername)
+                    file_metadata = {
+                    'name': filename,
+                    'parents':[folderid],
+                    'mimeType': 'application/vnd.google-apps.spreadsheet'
+                    }
+                    file = service.files().create(body=file_metadata).execute()
+                    return file['id']
+                
+            file_metadata = {
+            'name': filename,
+            'mimeType': 'application/vnd.google-apps.spreadsheet'
+            }
+            
+            file = service.files().create(body=file_metadata).execute()
+            
+            return file['id']
     def create_doc(self,*filename):
         if not filename:
             filename="NewDoc"
@@ -834,6 +862,9 @@ class Sheet:
                       self._id=self.create("NewSheet"+str(timenow))
                       id_=self._id
                       print("Can't find SheetID , automake  NewSheet"+str(timenow))
+        def reset_color(self,set_range,**kwargs):
+                self.setcolor(set_range,(255,255,255),'',**kwargs)
+       
         def setcolor(self,set_range,RGB,*args,**kwargs):# if want to use HEXcolor RGB set 0
 
             sheetId=0 # ID default  workbook1
@@ -1043,7 +1074,7 @@ class Sheet:
                 return response.get('valueRanges')[0]['values'][0][0]
             else:
                 return response.get('valueRanges')[0]['values']
-        def delete(self,workRange,content,*args):
+        def delete(self,workRange,*args):
                 self.write(workRange,'')
         def write(self,workRange,content,*args):
             
