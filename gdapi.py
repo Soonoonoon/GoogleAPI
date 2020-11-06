@@ -792,6 +792,17 @@ class Drive:
                     }
                 file = service.files().create(body=file_metadata).execute()
                 return file['id']
+    def move(self,fileId,folder):
+            folder_id=self.find_folder_id(folder)
+            if not folder_id:print("Destination of folder was not found")
+            if folder_id:
+               file = service.files().get(fileId=fileId,
+                                         fields='parents').execute()
+               previous_parents = ",".join(file.get('parents')) 
+               file = service.files().update(fileId=fileId,
+                                            addParents=folder_id,
+                                            removeParents=previous_parents,
+                                            fields='id, parents').execute()
     def delete_emptyfolder(self):
         result=self.find_folder()
         emptyfolder={}
@@ -863,6 +874,70 @@ class Sheet:
                       self._id=self.create("NewSheet"+str(timenow),**kwargs)
                       id_=self._id
                       print("Can't find SheetID , automake  NewSheet"+str(timenow))
+        def sort(self,chose_col,updown):
+            sheetId=0
+            if updown:
+                updown='ASCENDING'
+            else:
+                updown='DESCENDING'
+            body=        {
+              "requests": [
+                {
+                  "sortRange": {
+                    "range": {
+                      "sheetId": sheetId,
+                      "startRowIndex": 1,
+                      "endRowIndex": 50,
+                      "startColumnIndex": 0,
+                      "endColumnIndex": 50
+                    },
+                    "sortSpecs": [
+                      {
+                        "dimensionIndex": chose_col-1,
+                        "sortOrder": updown
+                      }]  }
+                    }
+                  ]
+                }
+            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+    
+        def FNR(self,find_str,replace_str,FNR_allsheet,*sheetID):
+                #  if set FNR_allsheet , sheetId must be None
+                  if FNR_allsheet:
+                      FNR_allsheet=True
+                  else:
+                      FNR_allsheet=False
+                  sheetId=0
+                  if sheetID:
+                      sheetId=sheetID[0]
+                  if FNR_allsheet:    
+                          body=      {"requests":[{'findReplace':{
+                          "find": find_str,
+                          "replacement": replace_str,
+                          "matchCase": True ,
+                          "matchEntireCell": True ,
+                          "searchByRegex": True ,
+                          "includeFormulas": True ,
+                          "allSheets": True
+                          }}]
+
+                   
+                      }
+                  else:
+                          body=      {"requests":[{'findReplace':{
+                          "find": find_str,
+                          "replacement": replace_str,
+                          "matchCase": True ,
+                          "matchEntireCell": True ,
+                          "searchByRegex": True ,
+                          "includeFormulas": True ,
+                          "sheetId": sheetId
+                          }}]
+
+                       
+                          }
+                          
+                  request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
         def reset_color(self,set_range,**kwargs):
                 self.setcolor(set_range,(255,255,255),'',**kwargs)
        
@@ -919,14 +994,20 @@ class Sheet:
                       }]
                      }
             request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def adjust_column_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid):
+        
+        def adjust_col_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid):
                 sheetId=0
                 Rowrange_1,Rowrange_2=1,1
                 Colrange_1,Colrange_2=1,1
                 if Colrange and ":" in str(Colrange):
                     Colrange_1,Colrange_2=Colrange.split(':')
+                    if re.findall('[a-z]',Colrange_1,re.IGNORECASE) and  re.findall('[a-z]',Colrange_2,re.IGNORECASE) :
+                            Colrange_1=alphabet_num[re.findall('[a-z]',Colrange_1,re.IGNORECASE)[0].lower()]
+                            Colrange_2=alphabet_num[re.findall('[a-z]',Colrange_2,re.IGNORECASE)[0].lower()]
+                            
                 if Rowrange and ":" in str(Rowrange):
                     Rowrange_1,Rowrange_2=Rowrange.split(":")
+                    
                     
                 if sheetid:
                     sheetId=sheetid[0]
@@ -963,6 +1044,99 @@ class Sheet:
                       ]
                     }
                 request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def adjust_row(self,Rowrange,Row_pixel,*sheetid):
+                sheetId=0
+                Rowrange_1,Rowrange_2=1,1
+                
+                if Rowrange and ":" in str(Rowrange):
+                    Rowrange_1,Rowrange_2=Rowrange.split(":")
+                   
+                    
+                if sheetid:
+                    sheetId=sheetid[0]
+                body={
+                      "requests": [
+                      
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "ROWS",
+                              "startIndex": int(Rowrange_1)-1,
+                              "endIndex":   int(Rowrange_2)-1
+                            },
+                            "properties": {
+                              "pixelSize": Row_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
+                        }
+                      ]
+                    }
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def adjust_col(self,Colrange,Col_pixel,*sheetid):
+                sheetId=0
+                
+                Colrange_1,Colrange_2=1,1
+                if Colrange and ":" in str(Colrange):
+                    Colrange_1,Colrange_2=Colrange.split(':')
+                    if re.findall('[a-z]',Colrange_1,re.IGNORECASE) and  re.findall('[a-z]',Colrange_2,re.IGNORECASE) :
+                            Colrange_1=alphabet_num[re.findall('[a-z]',Colrange_1,re.IGNORECASE)[0].lower()]
+                            Colrange_2=alphabet_num[re.findall('[a-z]',Colrange_2,re.IGNORECASE)[0].lower()]
+               
+                if sheetid:
+                    sheetId=sheetid[0]
+                body={
+                      "requests": [
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "COLUMNS",
+                              "startIndex": int(Colrange_1)-1,
+                              "endIndex":   int(Colrange_2)-1
+                            },
+                            "properties": {
+                              "pixelSize": Col_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
+                        }
+                      ]
+                    }
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def append_row(self,length,*sheetID):
+               sheetId=0
+               if sheetID:
+                      sheetId=sheetID[0] 
+               body=   {
+                  "requests": [
+                    {
+                      "appendDimension": {
+                        "sheetId": sheetId,
+                        "dimension": "ROWS",
+                        "length": length
+                      }
+                    }
+                    
+                ]}
+               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+          
+               
+        def append_col(self,length,*sheetID):
+               sheetId=0
+               if sheetID:
+                      sheetId=sheetID[0] 
+               body=  {"requests":[{
+                      "appendDimension": {
+                        "sheetId": sheetId,
+                        "dimension": "COLUMNS",
+                        "length": length}
+                      }
+                    ]}
+               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+          
+                  
         @property
         def id(self):
             return self._id
