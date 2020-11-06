@@ -315,6 +315,7 @@ class Drive:
                                               }
                                             ).execute()
     def create_newsheet(self,*filename,**folder):
+            
             if not filename:
                 filename='NewSheet'
             
@@ -323,7 +324,7 @@ class Drive:
                     foldername=filename[1]
                 elif folder:
                     foldername=folder['folder']
-                    
+                 
                 folderid=self.find_folder_id(foldername)
                 if folderid:
                     file_metadata = {
@@ -387,10 +388,8 @@ class Drive:
         
         return file['id']
     def find_folder_id(self,foldername):
-          results = service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
-                                      
-                                              spaces='drive',
-                                              
+          results = service.files().list(     q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'",
+                                              spaces='drive',                                              
                                               fields='nextPageToken, files(id, name)',
                                               pageToken=None).execute()
           items = results.get('files', [])
@@ -835,6 +834,7 @@ class Drive:
                             fileid,name_s=temp_dict[str(chose_)]
                             self.delete_id(fileid)
                     return
+
 class Sheet:
         
         def __init__(self,*id_in,**kwargs):
@@ -851,15 +851,16 @@ class Sheet:
             else:
                 timenow=datetime.datetime.now().strftime("%H%M%S")
                 if kwargs:
-                
+                        if 'folder' in kwargs:
+                                foldername=kwargs['folder']
                         for i in kwargs:
                           find_name=re.findall("page|new_?page|new_?name|new_?title|n\S?ame|title|nam_?|",str(i),re.IGNORECASE)
                           if find_name and len(find_name)<=2:
                            
-                            new_name=kwargs[find_name[0]]
-                            self._id=self.create(str(new_name))
+                            new_name=kwargs[find_name[0]]                           
+                            self._id=self.create(str(new_name),folder=foldername)
                 else:
-                      self._id=self.create("NewSheet"+str(timenow))
+                      self._id=self.create("NewSheet"+str(timenow),**kwargs)
                       id_=self._id
                       print("Can't find SheetID , automake  NewSheet"+str(timenow))
         def reset_color(self,set_range,**kwargs):
@@ -1047,9 +1048,18 @@ class Sheet:
             request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_ ,body=body)
             request.execute()
         @classmethod    
-        def create(cls,filename,*args):  #create　new spreadsheet
+        def create(cls,filename,*args,**kwargs):  #create　new spreadsheet
             global id_
             sheet_page=[]
+            if kwargs:
+                    if 'folder' in kwargs:
+                            foldername=kwargs['folder']
+                            sheetid=Drive().create_newsheet(filename,folder=foldername)
+                            id_=sheetid
+                            cls.id=sheetid
+                            
+                            cls.getsheet(cls)
+                            return cls.id
             if  args:
                 for new_page in args:
                     sheet_page.append({"properties":{"title": new_page}})
