@@ -147,3 +147,13 @@ How to use Google Sheet and Google Drive API
         
    ## Append Row
     sheet.append_row(length,*sheetid) #append length row 
+   ## Find and Replace
+    find='string'           #   find     string
+    reapcle='test'          #   replace string
+    find_all_sheet_or_not=0 #   0=find/replace only one page,1=find/replace all page
+    sheet.FNR(find,replace,find_all_sheet_or_not,*sheetid)
+
+   ## Sort Data
+    ChoseColumn=1    #  sort column=1 data
+    UpOrDown=0       #  0/1  ( DESCENDING / ASCENDING )
+    sheet.sort(ChoseColumn,UpOrDown)
