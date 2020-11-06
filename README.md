@@ -2,7 +2,7 @@
 
 How to use Google Sheet and Google Drive API 
 
-# Function
+# Drive
 
 ## Quickstart
     # Put gdapi.py into Lib folder
@@ -59,7 +59,8 @@ How to use Google Sheet and Google Drive API
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
-## Sheet   
+ ****
+# Sheet   
 *```Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )```*
  
     sheet=gdapi.S(sheetid)  # if no sheetid it will create a newsheet 
