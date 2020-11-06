@@ -1,6 +1,8 @@
 import gdapi
 import time
 # Drive_1=gdapi.Drive(r'D:\Python\All_Practice\GoogleAPI\token\mnbbtoken.pickle')
+# Before ues API , log in your drive first.
+# Login Function:
 Drive_1=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,etc...
 
 # if you want to change Drive_1 variable to use another Credential
@@ -48,7 +50,7 @@ if Drive_1:
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
-## Sheet
+## Sheet #!!! before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
     sheet=gdapi.Writer(sheetid)  # if no sheetid it will create a newsheet 
     
     Data='Hi'
