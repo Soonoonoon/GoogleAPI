@@ -17,6 +17,30 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 Download_path=os.path.split(sys.argv[0])[0]
 #mimetype dict
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
+# number   <==> alphaber 
+num_alphabet = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
+# alphaber <==> number
+alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
+def RGB_to_HEX(R,G,B):
+
+    Rh=hex(R).replace('0x','')
+    Gh=hex(G).replace('0x','')
+    Bh=hex(B).replace('0x','')
+    return '#'+(Rh+Gh+Bh)
+    
+def HEX_to_RGB(Hex):
+    if re.findall("#",str(Hex),re.IGNORECASE):
+        index=Hex.find("#")
+        Rh=Hex[index+1:index+3]
+        Gh=Hex[index+3:index+5]
+        Bh=Hex[index+5:index+7]
+        
+        R=int(Rh,16)
+        G=int(Gh,16)
+        B=int(Bh,16)
+        
+        return R,G,B
+
 
 def format_str(namelimit,name):
 	name_len=namelimit
@@ -733,6 +757,14 @@ class Drive:
              return dict_all
          
          return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,**kwargs)
+    def mkdir(self,foldername):
+                file_metadata = {
+                    'name': foldername,
+                    
+                    'mimeType': 'application/vnd.google-apps.folder'
+                    }
+                file = service.files().create(body=file_metadata).execute()
+                return file['id']
     def delete_emptyfolder(self):
         result=self.find_folder()
         emptyfolder={}
@@ -794,7 +826,7 @@ class Sheet:
                 
                         for i in kwargs:
                           find_name=re.findall("page|new_?page|new_?name|new_?title|n\S?ame|title|nam_?|",str(i),re.IGNORECASE)
-                          if len(find_name)<=2:
+                          if find_name and len(find_name)<=2:
                            
                             new_name=kwargs[find_name[0]]
                             self._id=self.create(str(new_name))
@@ -802,7 +834,103 @@ class Sheet:
                       self._id=self.create("NewSheet"+str(timenow))
                       id_=self._id
                       print("Can't find SheetID , automake  NewSheet"+str(timenow))
-           
+        def setcolor(self,set_range,RGB,*args,**kwargs):# if want to use HEXcolor RGB set 0
+
+            sheetId=0 # ID default  workbook1
+            alpha=1   # Transparent default 1
+            
+            find_alphabet=re.findall('[a-z]',set_range,re.IGNORECASE)
+            if find_alphabet:
+                alphabet=find_alphabet[0].lower()
+                if alphabet in alphabet_num:
+                     col_number=alphabet_num[alphabet]
+                     row_number=re.findall('\d+',set_range,re.IGNORECASE)[0]
+            elif ':' in str(set_range):
+                row_number,col_number=set_range.split(':')
+            
+            if kwargs:
+                find_alpha=re.findall('alpha|transparent',str(kwargs),re.IGNORECASE)
+                if find_alpha and len(find_alpha)<2:
+                    
+                    alpha=int(kwargs[find_alpha[0]])
+                find_id=re.findall('sheetid|id',str(kwargs),re.IGNORECASE)
+                if find_id and len(find_id)<2:
+                  
+                    sheetId=int(kwargs[find_id[0]])
+                    
+            if 'tuple'  in str(type(RGB)):
+                R,G,B=RGB
+            if args :
+                if '#' in str(args[0]) and 'tuple' not in str(type(RGB)): 
+                    R,G,B=HEX_to_RGB(args[0])
+            
+            body={"requests":[{
+                            "updateCells":{
+                            "rows":[{
+                                    "values":[{"userEnteredFormat":{
+                                               "backgroundColor":
+                                               {
+                                               "red":   R/255,
+                                               "green": G/255,
+                                               "blue":  B/255,
+                                               "alpha": alpha
+
+                                               }}
+                                    }]}],
+                            "fields":'userEnteredFormat.backgroundColor',
+                            "start":{  # range <==> start(A1) only set 1 cells(sheetId,rowIndex,columnIndex,)
+                                    "sheetId": sheetId,
+                                    "rowIndex": int(row_number)-1,
+                                    "columnIndex": int(col_number)-1
+                                    }
+                            }
+                      }]
+                     }
+            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def adjust_column_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid):
+                sheetId=0
+                Rowrange_1,Rowrange_2=1,1
+                Colrange_1,Colrange_2=1,1
+                if Colrange and ":" in str(Colrange):
+                    Colrange_1,Colrange_2=Colrange.split(':')
+                if Rowrange and ":" in str(Rowrange):
+                    Rowrange_1,Rowrange_2=Rowrange.split(":")
+                    
+                if sheetid:
+                    sheetId=sheetid[0]
+                body={
+                      "requests": [
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "COLUMNS",
+                              "startIndex": int(Colrange_1)-1,
+                              "endIndex":   int(Colrange_2)-1
+                            },
+                            "properties": {
+                              "pixelSize": Col_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
+                        },
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "ROWS",
+                              "startIndex": int(Rowrange_1)-1,
+                              "endIndex":   int(Rowrange_2)-1
+                            },
+                            "properties": {
+                              "pixelSize": Row_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
+                        }
+                      ]
+                    }
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
         @property
         def id(self):
             return self._id
@@ -915,6 +1043,8 @@ class Sheet:
                 return response.get('valueRanges')[0]['values'][0][0]
             else:
                 return response.get('valueRanges')[0]['values']
+        def delete(self,workRange,content,*args):
+                self.write(workRange,'')
         def write(self,workRange,content,*args):
             
                 
