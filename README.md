@@ -51,23 +51,23 @@ How to use Google Sheet and Google Drive API
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
-## Sheet #!!! before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
+## Sheet  `Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )`
     sheet=gdapi.Writer(sheetid)  # if no sheetid it will create a newsheet 
-    
+   ## Write function  
     Data='Hi'
     sheet.write("A1",Data)  # A1='Hi'
     Data=[['Hi','I'],['am','Test']]
     sheet.write("A1:B2",Data)    # A1='Hi'  |  B1='I'
                                  # A2='am'  |  B2='Test'
     
-    #if set 1 behind Data 
+   ## Set 1 behind Data argument 
     sheet.write("A1:B2",Data,1)  # A1='Hi'  |  B1='am'
                                  # A2='I'   |  B2='Test'
     Data=[1,2,3,4,5,6]                           
     sheet.write("A1:F1",Data)    # A1=1  |  B1=2 |  C1=3 |  D1=4 |  E1=5 |  F1=6 |
     
     
-    # If write across row data
+   ## Write across row data
 
     arr=['abc','def','g','ad','ee','bb']
 
@@ -78,30 +78,30 @@ How to use Google Sheet and Google Drive API
         # A3 = g
         # A4 = ad
 
-    # Read sheet content
+   ## Read sheet content
     
     string=sheet.read("A1")                      # return string
     list_value=sheet.read("workbook2!:A1:B3")    # return Value list
 
     
-    # Add new workbook in exist spreadsheet
+   ## Add new workbook in exist spreadsheet
     sheet.add_sheet("workbook1","workbook2")
     
-    # get spreadsheet name
+   ## Get spreadsheet name
     sheet.title # return spreadsheet name
     
-    # get spreadsheet id
+   ## Get spreadsheet id
     sheet.id # return sheet id
     
-    # get spreadsheet url
+   ## Get spreadsheet url
     sheet.url # return sheet url
     
-    # get spreadsheet sub
+   ## Get spreadsheet sub
     sublist=sheet.sub # return sheet sub list
     
-    # rename spreadsheet
+   ## Rename spreadsheet
     sheet.title="newtitle"
     
-    # rename workbookdsheet
+   ## Rename workbookdsheet
     sheet.resubtitle("oldtitle","newtitle")
 
