@@ -777,7 +777,7 @@ class Drive:
                     return
 class Sheet:
         
-        def __init__(self,*id_in):
+        def __init__(self,*id_in,**kwargs):
         
             global id_
             if id_in:
@@ -790,9 +790,18 @@ class Sheet:
                        print("Your SheetID was not found")
             else:
                 timenow=datetime.datetime.now().strftime("%H%M%S")
-                self._id=self.create("NewSheet"+str(timenow))
-                id_=self._id
-                print("Can't find SheetID , automake  NewSheet"+str(timenow))
+                if kwargs:
+                
+                        for i in kwargs:
+                          find_name=re.findall("page|new_?page|new_?name|new_?title|n\S?ame|title|nam_?|",str(i),re.IGNORECASE)
+                          if len(find_name)<=2:
+                           
+                            new_name=kwargs[find_name[0]]
+                            self._id=self.create(str(new_name))
+                else:
+                      self._id=self.create("NewSheet"+str(timenow))
+                      id_=self._id
+                      print("Can't find SheetID , automake  NewSheet"+str(timenow))
            
         @property
         def id(self):
