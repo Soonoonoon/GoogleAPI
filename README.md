@@ -96,7 +96,9 @@ How to use Google Sheet and Google Drive API
     string=sheet.read("A1")                      # return string
     list_value=sheet.read("workbook2!:A1:B3")    # return Value list
 
-    
+   ## Delete content
+    sheet.delete("A1:F1")    #A1~F1 will be deleted
+ 
    ## Add new workbook in exist spreadsheet
     sheet.add_sheet("workbook1","workbook2")
     
@@ -118,3 +120,29 @@ How to use Google Sheet and Google Drive API
    ## Rename workbookdsheet
     sheet.resubtitle("oldtitle","newtitle")
 
+   ## Color set
+    sheet.setcolor("A1",(255,120,0),,) # (RangeSetColor,Tuple(R,G,B),HexColor,Alpha=0.5,SheetId=0)
+    #              Description                  |   Accept  Value
+    #----------------------------------------------------------------
+    #  RangeSetColor = set color on which cell  | Set  > "1:1"= "A1"
+    #  Tuple(R,G,B)  = set color RGB            | Set  > (255,255,0) # accept tuple and int
+    #　HexColor      = set color in Hex         | Set  > #CAFFFF    , if set Hexcolor , (R,G,B) can put anything except tuple.
+    #  Alpha         = set transparent          | Set  > [0,1]      , default=1
+    #  SheetId       = set sheetid              | Set  > long int   , default=0  , the number  in url gid=[sheetid] 
+   ## Adjust_column and row
+    Colrange="1:5" # Column A-D =1~4
+    Col_pixel= 20  # 20 pixels between  column 
+    Rowrange="1:4" # Row= 1~3
+    Row_pixel= 40  # 40 pixels between  row 
+    sheetid=0      # default=0
+    sheet.adjust_column_row(Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid):
+   ## Only adjust column
+    sheet.adjust_col(Colrange,Col_pixel,*sheetid)
+   ## Only adjust row
+    sheet.adjust_row(Rowrange,Row_pixel,*sheetid)
+        
+   ## Append Column
+    sheet.append_col(length,*sheetid) #append length column
+        
+   ## Append Row
+    sheet.append_row(length,*sheetid) #append length row 
