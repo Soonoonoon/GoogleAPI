@@ -1,5 +1,8 @@
 import gdapi
 import time
+# = = = =  Drive = = = =
+
+
 # Drive=gdapi.Drive(r'D:\Python\GoogleAPI\token\your.pickle')
 # Before ues API , log in your drive first.
 # Login Function:
@@ -26,6 +29,8 @@ if Drive:
     Drive.delete("filename")
 ## Delete Emptyfolder
     Drive.delete_emptyfolder()
+## Move file
+    Drive.move(Fileid,Foldername)
 ## Empty trashcan
     Drive.emptytrash()
 ## List all file
@@ -38,7 +43,11 @@ if Drive:
     Drive.mkdir(foldername) 
 ## Create new Sheet
     Drive.create_newsheet('sheetname')
-    
+
+    #example :
+    # 1.  Drive.create_newsheet('sheetname',folder='Fold') # It will find the folder , and create under the folder , or create a new folder
+    # 2.  Drive.create_newsheet('sheetname','Fold')
+    # example 1 equal 2
 ## Create new doc
     Drive.create_doc('Docname')
     
@@ -62,11 +71,20 @@ if Drive:
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
-## Sheet #   Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
+
+
+    
+# = = = =  Sheet = = = =
+    #Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
+
     sheet=gdapi.Sheet(sheetid)  # if no sheetid it will create a newsheet
 
     # Sheet create
-    sheet=gdapi.Sheet(name="NewTitle")  # it will create a new create which is named NewTitle 
+    sheet=gdapi.Sheet(name="NewTitle")  # it will create a new create which is named NewTitle
+    # Sheet create example:
+    sheet=gdapi.Sheet(name="NewTitle",folder="Foldername") # it will create a new create which is named NewTitle.
+                                                           # and if find the folder name it will put sheet in
+                                                           # or create a new folder
 
 
     # Write
@@ -152,4 +170,15 @@ if Drive:
     Rowrange="1:4" # Row= 1~3
     Row_pixel= 40  # 40 pixels between  row 
     sheetid=0      # default=0
-    sheet.adjust_column_row(Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid):
+    sheet.adjust_col_row(Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid)
+    # Only adjust column
+    sheet.adjust_col(Colrange,Col_pixel,*sheetid)
+    # Only adjust row
+    sheet.adjust_row(Rowrange,Row_pixel,*sheetid)
+        
+    # Append Column
+    sheet.append_col(length,*sheetid) #append length column
+        
+    # Append Row
+    sheet.append_row(length,*sheetid) #append length row
+            
