@@ -51,7 +51,11 @@ if Drive_1:
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
 ## Sheet #!!! before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
-    sheet=gdapi.Writer(sheetid)  # if no sheetid it will create a newsheet 
+    sheet=gdapi.Sheet(sheetid)  # if no sheetid it will create a newsheet 
+    # Sheet create
+    sheet=gdapi.Sheet(name="NewTitle")  # it will create a new create which is named NewTitle 
+    
+    # Write
     
     Data='Hi'
     sheet.write("A1",Data)  # A1='Hi'
