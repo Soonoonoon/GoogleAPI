@@ -51,8 +51,10 @@ How to use Google Sheet and Google Drive API
     sharestate=Drive.get_shared(file_id)       # return boolean True / False
 ## Get Filelist
     Drive.get_filelist()                       # will write a list csv to default path
-## Sheet   ```Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )```
-    sheet=gdapi.Writer(sheetid)  # if no sheetid it will create a newsheet 
+## Sheet   
+*```Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )```*
+
+    sheet=gdapi.S(sheetid)  # if no sheetid it will create a newsheet 
    ## Write function  
     Data='Hi'
     sheet.write("A1",Data)  # A1='Hi'
