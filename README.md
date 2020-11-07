@@ -188,16 +188,16 @@ How to use Google Sheet and Google Drive API
     formula='match("'+findwhat+","+findrange+'",0)'
     sheet.formula(workrange,formula,*sheetid)
 
-   ### use formula get result in different workbook
+   ### Use formula get result in different workbook
     sheet.formula("workbook2!B25",'sum(workbook1!B2:B5)')  # Get result in workbook2>B25 , execute function in wrokbook1 >B2:B25
 
-   ## get col index
+   ## Get col index
     findname="ABC"
     index_col=sheet.get_col(findname,*sheetID)  # return index_col number
 
-   ## get row index
+   ## Get row index
     findname="ABC"
     index_row=sheet.get_col(findname,*sheetID)  # return index_row number
 
-   ## get_subsheet id
+   ## Get_subsheet id
     sheet_id=sheet.getsub_id(findname)
