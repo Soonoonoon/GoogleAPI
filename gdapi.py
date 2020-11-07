@@ -17,10 +17,10 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 Download_path=os.path.split(sys.argv[0])[0]
 #mimetype dict
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
-# number   <==> alphaber 
-num_alphabet = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
-# alphaber <==> number
-alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
+# number   <==> alphabet 
+num_alphabet = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z', 27: 'aa', 28: 'ab', 29: 'ac', 30: 'ad', 31: 'ae', 32: 'af', 33: 'ag', 34: 'ah', 35: 'ai', 36: 'aj', 37: 'ak', 38: 'al', 39: 'am', 40: 'an', 41: 'ao', 42: 'ap', 43: 'aq', 44: 'ar', 45: 'as', 46: 'at', 47: 'au', 48: 'av', 49: 'aw', 50: 'ax', 51: 'ay', 52: 'az', 54: 'ba', 55: 'bb', 56: 'bc', 57: 'bd', 58: 'be', 59: 'bf', 60: 'bg', 61: 'bh', 62: 'bi', 63: 'bj', 64: 'bk', 65: 'bl', 66: 'bm', 67: 'bn', 68: 'bo', 69: 'bp', 70: 'bq', 71: 'br', 72: 'bs', 73: 'bt', 74: 'bu', 75: 'bv', 76: 'bw', 77: 'bx', 78: 'by', 79: 'bz', 81: 'ca', 82: 'cb', 83: 'cc', 84: 'cd', 85: 'ce', 86: 'cf', 87: 'cg', 88: 'ch', 89: 'ci', 90: 'cj', 91: 'ck', 92: 'cl', 93: 'cm', 94: 'cn', 95: 'co', 96: 'cp', 97: 'cq', 98: 'cr', 99: 'cs', 100: 'ct', 101: 'cu', 102: 'cv', 103: 'cw', 104: 'cx', 105: 'cy', 106: 'cz', 108: 'da', 109: 'db', 110: 'dc', 111: 'dd', 112: 'de', 113: 'df', 114: 'dg', 115: 'dh', 116: 'di', 117: 'dj', 118: 'dk', 119: 'dl', 120: 'dm', 121: 'dn', 122: 'do', 123: 'dp', 124: 'dq', 125: 'dr', 126: 'ds', 127: 'dt', 128: 'du', 129: 'dv', 130: 'dw', 131: 'dx', 132: 'dy', 133: 'dz', 135: 'ea', 136: 'eb', 137: 'ec', 138: 'ed', 139: 'ee', 140: 'ef', 141: 'eg', 142: 'eh', 143: 'ei', 144: 'ej', 145: 'ek', 146: 'el', 147: 'em', 148: 'en', 149: 'eo', 150: 'ep', 151: 'eq', 152: 'er', 153: 'es', 154: 'et', 155: 'eu', 156: 'ev', 157: 'ew', 158: 'ex', 159: 'ey', 160: 'ez', 162: 'fa', 163: 'fb', 164: 'fc', 165: 'fd', 166: 'fe', 167: 'ff', 168: 'fg', 169: 'fh', 170: 'fi', 171: 'fj', 172: 'fk', 173: 'fl', 174: 'fm', 175: 'fn', 176: 'fo', 177: 'fp', 178: 'fq', 179: 'fr', 180: 'fs', 181: 'ft', 182: 'fu', 183: 'fv', 184: 'fw', 185: 'fx', 186: 'fy', 187: 'fz', 189: 'ga', 190: 'gb', 191: 'gc', 192: 'gd', 193: 'ge', 194: 'gf', 195: 'gg', 196: 'gh', 197: 'gi', 198: 'gj', 199: 'gk', 200: 'gl', 201: 'gm', 202: 'gn', 203: 'go', 204: 'gp', 205: 'gq', 206: 'gr', 207: 'gs', 208: 'gt', 209: 'gu', 210: 'gv', 211: 'gw', 212: 'gx', 213: 'gy', 214: 'gz', 216: 'ha', 217: 'hb', 218: 'hc', 219: 'hd', 220: 'he', 221: 'hf', 222: 'hg', 223: 'hh', 224: 'hi', 225: 'hj', 226: 'hk', 227: 'hl', 228: 'hm', 229: 'hn', 230: 'ho', 231: 'hp', 232: 'hq', 233: 'hr', 234: 'hs', 235: 'ht', 236: 'hu', 237: 'hv', 238: 'hw', 239: 'hx', 240: 'hy', 241: 'hz', 243: 'ia', 244: 'ib', 245: 'ic', 246: 'id', 247: 'ie', 248: 'if', 249: 'ig', 250: 'ih', 251: 'ii', 252: 'ij', 253: 'ik', 254: 'il', 255: 'im', 256: 'in', 257: 'io', 258: 'ip', 259: 'iq', 260: 'ir', 261: 'is', 262: 'it', 263: 'iu', 264: 'iv', 265: 'iw', 266: 'ix', 267: 'iy', 268: 'iz', 270: 'ja', 271: 'jb', 272: 'jc', 273: 'jd', 274: 'je', 275: 'jf', 276: 'jg', 277: 'jh', 278: 'ji', 279: 'jj', 280: 'jk', 281: 'jl', 282: 'jm', 283: 'jn', 284: 'jo', 285: 'jp', 286: 'jq', 287: 'jr', 288: 'js', 289: 'jt', 290: 'ju', 291: 'jv', 292: 'jw', 293: 'jx', 294: 'jy', 295: 'jz', 297: 'ka', 298: 'kb', 299: 'kc'}
+# alphabet <==> number
+alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26, 'aa': 27, 'ab': 28, 'ac': 29, 'ad': 30, 'ae': 31, 'af': 32, 'ag': 33, 'ah': 34, 'ai': 35, 'aj': 36, 'ak': 37, 'al': 38, 'am': 39, 'an': 40, 'ao': 41, 'ap': 42, 'aq': 43, 'ar': 44, 'as': 45, 'at': 46, 'au': 47, 'av': 48, 'aw': 49, 'ax': 50, 'ay': 51, 'az': 52, 'ba': 54, 'bb': 55, 'bc': 56, 'bd': 57, 'be': 58, 'bf': 59, 'bg': 60, 'bh': 61, 'bi': 62, 'bj': 63, 'bk': 64, 'bl': 65, 'bm': 66, 'bn': 67, 'bo': 68, 'bp': 69, 'bq': 70, 'br': 71, 'bs': 72, 'bt': 73, 'bu': 74, 'bv': 75, 'bw': 76, 'bx': 77, 'by': 78, 'bz': 79, 'ca': 81, 'cb': 82, 'cc': 83, 'cd': 84, 'ce': 85, 'cf': 86, 'cg': 87, 'ch': 88, 'ci': 89, 'cj': 90, 'ck': 91, 'cl': 92, 'cm': 93, 'cn': 94, 'co': 95, 'cp': 96, 'cq': 97, 'cr': 98, 'cs': 99, 'ct': 100, 'cu': 101, 'cv': 102, 'cw': 103, 'cx': 104, 'cy': 105, 'cz': 106, 'da': 108, 'db': 109, 'dc': 110, 'dd': 111, 'de': 112, 'df': 113, 'dg': 114, 'dh': 115, 'di': 116, 'dj': 117, 'dk': 118, 'dl': 119, 'dm': 120, 'dn': 121, 'do': 122, 'dp': 123, 'dq': 124, 'dr': 125, 'ds': 126, 'dt': 127, 'du': 128, 'dv': 129, 'dw': 130, 'dx': 131, 'dy': 132, 'dz': 133, 'ea': 135, 'eb': 136, 'ec': 137, 'ed': 138, 'ee': 139, 'ef': 140, 'eg': 141, 'eh': 142, 'ei': 143, 'ej': 144, 'ek': 145, 'el': 146, 'em': 147, 'en': 148, 'eo': 149, 'ep': 150, 'eq': 151, 'er': 152, 'es': 153, 'et': 154, 'eu': 155, 'ev': 156, 'ew': 157, 'ex': 158, 'ey': 159, 'ez': 160, 'fa': 162, 'fb': 163, 'fc': 164, 'fd': 165, 'fe': 166, 'ff': 167, 'fg': 168, 'fh': 169, 'fi': 170, 'fj': 171, 'fk': 172, 'fl': 173, 'fm': 174, 'fn': 175, 'fo': 176, 'fp': 177, 'fq': 178, 'fr': 179, 'fs': 180, 'ft': 181, 'fu': 182, 'fv': 183, 'fw': 184, 'fx': 185, 'fy': 186, 'fz': 187, 'ga': 189, 'gb': 190, 'gc': 191, 'gd': 192, 'ge': 193, 'gf': 194, 'gg': 195, 'gh': 196, 'gi': 197, 'gj': 198, 'gk': 199, 'gl': 200, 'gm': 201, 'gn': 202, 'go': 203, 'gp': 204, 'gq': 205, 'gr': 206, 'gs': 207, 'gt': 208, 'gu': 209, 'gv': 210, 'gw': 211, 'gx': 212, 'gy': 213, 'gz': 214, 'ha': 216, 'hb': 217, 'hc': 218, 'hd': 219, 'he': 220, 'hf': 221, 'hg': 222, 'hh': 223, 'hi': 224, 'hj': 225, 'hk': 226, 'hl': 227, 'hm': 228, 'hn': 229, 'ho': 230, 'hp': 231, 'hq': 232, 'hr': 233, 'hs': 234, 'ht': 235, 'hu': 236, 'hv': 237, 'hw': 238, 'hx': 239, 'hy': 240, 'hz': 241, 'ia': 243, 'ib': 244, 'ic': 245, 'id': 246, 'ie': 247, 'if': 248, 'ig': 249, 'ih': 250, 'ii': 251, 'ij': 252, 'ik': 253, 'il': 254, 'im': 255, 'in': 256, 'io': 257, 'ip': 258, 'iq': 259, 'ir': 260, 'is': 261, 'it': 262, 'iu': 263, 'iv': 264, 'iw': 265, 'ix': 266, 'iy': 267, 'iz': 268, 'ja': 270, 'jb': 271, 'jc': 272, 'jd': 273, 'je': 274, 'jf': 275, 'jg': 276, 'jh': 277, 'ji': 278, 'jj': 279, 'jk': 280, 'jl': 281, 'jm': 282, 'jn': 283, 'jo': 284, 'jp': 285, 'jq': 286, 'jr': 287, 'js': 288, 'jt': 289, 'ju': 290, 'jv': 291, 'jw': 292, 'jx': 293, 'jy': 294, 'jz': 295, 'ka': 297, 'kb': 298, 'kc': 299}
 def RGB_to_HEX(R,G,B):
 
     Rh=hex(R).replace('0x','')
@@ -847,7 +847,7 @@ class Drive:
                     return
 
 class Sheet:
-        
+        formula_use_data='for_formula_use_!A1'
         def __init__(self,*id_in,**kwargs):
         
             global id_
@@ -874,12 +874,31 @@ class Sheet:
                       self._id=self.create("NewSheet"+str(timenow),**kwargs)
                       id_=self._id
                       print("Can't find SheetID , automake  NewSheet"+str(timenow))
-        def sort(self,chose_col,updown):
+        def sort_col(self,name,*Updown,**col):
+            
+            
             sheetId=0
+            updown=1
+            if col:
+                if 'col' in col:
+                    chose_col=int(col['col'])-1
+                    if chose_col<0:
+                        chose_col=0
+            chose_col_=str(self.get_col(name))
+            
+            if  chose_col_ and re.findall('\d+',chose_col_,re.IGNORECASE):
+                chose_col=int(chose_col_)-1
+            else:
+                if chose_col:pass
+                else:return
+            if Updown:
+                if Updown[0]==1:updown=1
+                else:updown=0
             if updown:
                 updown='ASCENDING'
             else:
                 updown='DESCENDING'
+            
             body=        {
               "requests": [
                 {
@@ -893,23 +912,196 @@ class Sheet:
                     },
                     "sortSpecs": [
                       {
-                        "dimensionIndex": chose_col-1,
+                        "dimensionIndex": int(chose_col),
                         "sortOrder": updown
                       }]  }
                     }
                   ]
                 }
             request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-    
-        def FNR(self,find_str,replace_str,FNR_allsheet,*sheetID):
+        def get_col_index(self,colname,*sheetID):
+                sheetId=0
+                if sheetID:
+                      sheetId=sheetID[0]
+                name_chose=''
+                for j in self.sub:
+                    sheet_id_,name_=self.sub[j]
+                    if sheetId == sheet_id_:
+                        name_chose=name_+'!'
+                        break
+                formula='match("'+colname+'",'+str(name_chose)+'a1:in1,0)'
+             
+               
+                self.formula(self.formula_use_data,formula)
+                
+                
+                if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+                  colnum=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+                  return colnum
+                else:
+                  print('◭ Error: '+str(colname)+" Was Not Found")
+                  return None
+              
+                return int(colnum)
+        def get_col(self,findname,*sheetID):
+                sheetId=0
+                if sheetID:sheetId=sheetID[0]
+                name_chose=''
+                for j in self.sub:
+                    sheet_id_,name_=self.sub[j]
+                    if sheetId == sheet_id_:
+                        name_chose=name_+'!'
+                        break
+                    
+                    
+
+                formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,column('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
+                self.formula(self.formula_use_data,formula)
+                if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+                  col=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+                  return col
+                else:
+                  print('◭ Error: '+str(findname)+" Was Not Found")
+                  return None
+        def get_row(self,findname,*sheetID):
+                sheetId=0
+                if sheetID:sheetId=sheetID[0]
+                name_chose=''
+                for j in self.sub:
+                    sheet_id_,name_=self.sub[j]
+                    if sheetId == sheet_id_:
+                        name_chose=name_+'!'
+                        break
+                    
+                    
+
+                formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,ROW('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
+                self.formula(self.formula_use_data,formula)
+                if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+                  row=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+                  return row
+                else:
+                  print('◭ Error: '+str(findname)+" Was Not Found")
+                  return None
+            
+        
+        def formula(self,cell,formula,*sheetID):
+                  sheetId=0
+                 
+                  if '!' in str(cell):
+                    titlename,_____=cell.split('!')
+                    if 'for_formula_use_' not in str(self.sub):
+                        self.add_sheet("for_formula_use_")
+                   
+                   
+                    for j in self.sub:
+                      sheetidd,name_sheet=self.sub[j]
+                      if str(name_sheet)==str(titlename):
+                          sheetId=sheetidd
+                          break
+                  
+                  
+                  if not re.findall('=',str(formula),re.IGNORECASE):
+                      formula='='+formula
+                  if re.findall("'",str(formula),re.IGNORECASE):
+                      formula=formula.replace("'",'"')
+                  if sheetID:
+                      sheetId=sheetID[0]
+                   
+                  
+                  if ':' in cell: #A1:B1
+                      if '!'in str(cell):__,cell=cell.split('!')
+                      input1,input2=cell.split(':')
+                      find_alp1= re.findall("[a-z]{1,2}",input1,re.IGNORECASE)
+                      find_alp2= re.findall("[a-z]{1,2}",input2,re.IGNORECASE)
+                      if find_alp1 and find_alp2:
+                          col=alphabet_num[find_alp1[0].lower()]
+                          colend=alphabet_num[find_alp2[0].lower()]
+                          row=re.findall("\d+",input1,re.IGNORECASE)[0]
+                          rowend=re.findall("\d+",input2,re.IGNORECASE)[0]
+                      else:
+                          if '!'in str(cell):__,cell=cell.split('!')
+                              
+                          col=input1
+                          row=input2
+                          colend=int(col)+1
+                          rowend=int(row)+1
+                          
+                  else:# A5
+                      if '!'in str(cell):__,cell=cell.split('!')
+                      find_alp= re.findall("[a-z]{1,2}",cell,re.IGNORECASE)
+                      if find_alp:
+                          col=alphabet_num[find_alp[0].lower()]
+                          colend=int(col)+1
+                          row=re.findall("\d+",cell,re.IGNORECASE)[0]
+                          
+                          rowend=int(row)+1
+                 # formula="=MATCH(\""+findvalue+"\",'A1:IN1',0)"
+                  
+                  body=      {
+                          "requests": [
+                            {
+                              "repeatCell": {
+                                "range": {
+                                  "sheetId": sheetId,
+                                 
+                                  "startColumnIndex": int(col)-1,
+                                  "endColumnIndex": int(colend)-1,
+                                  "startRowIndex": int(row)-1,
+                                  "endRowIndex":int(rowend)-1
+                                },
+                                "cell": {
+                                  "userEnteredValue": {
+                                      "formulaValue": formula
+                                  }
+                                },
+                                "fields": "userEnteredValue"
+                              }
+                            }
+                          ]
+                        }
+                  request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+                  
+        def getsub_id(self,find):
+                              
+                              for j in self.sub:
+                                 sheet_id_,name_= self.sub[j]
+                                 if find==name_:
+                                     return sheet_id_
+                              return ''
+        def FNR(self,find_str,replace_str,*sheetID,**kwargs):
                 #  if set FNR_allsheet , sheetId must be None
+                  sheetId=0
+                  FNR_allsheet=0
+                  if sheetID:
+                      sheetId=sheetID[0] 
+                  if kwargs:
+                     
+                      if 'id' in kwargs:
+                          sheetId=kwargs['id']
+                          if not sheetId.isdecimal():
+                              print("Sheet ID must be positive number")
+
+                              return
+                          else:
+                              if int(sheetId)<0:
+                                  print("Sheet ID must be positive number")
+                      
+                        
+                      if 'allsheet'in kwargs:
+                          FNR_allsheet=1
+                      if 'name' in kwargs:
+                          sheet_name=kwargs['name']
+                          sheet_id=self.getsub_id(sheet_name)
+                          if sheet_id:
+                              sheetId=sheet_id
+                          
+                                 
                   if FNR_allsheet:
                       FNR_allsheet=True
                   else:
                       FNR_allsheet=False
-                  sheetId=0
-                  if sheetID:
-                      sheetId=sheetID[0]
+                  
                   if FNR_allsheet:    
                           body=      {"requests":[{'findReplace':{
                           "find": find_str,
@@ -1169,7 +1361,7 @@ class Sheet:
                 self._properties=response['properties']
            #except Exception as Err:
              #   if 'was not found' in str(Err):return
-        def add_sheet(newpagename,*args):   #create　new page in exist spreadsheet
+        def add_sheet(self,newpagename,*args):   #create　new page in exist spreadsheet
             global id_
             request_=[{"addSheet":{"properties":{"title": newpagename}}}]
             if  args:
@@ -1178,6 +1370,21 @@ class Sheet:
             body={"requests":request_}
             request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_,body=body)
             request.execute()
+            self.getsheet()
+        def delete_sheet(self,delete_pagename,*args):   #create　new page in exist spreadsheet
+                global id_
+                request_=[]
+                for i in self.sub:
+                    sheet_id_,name_page=self.sub[i]
+                    if delete_pagename in name_page:
+                        request_.append({"deleteSheet":{"sheetId":sheet_id_}})
+                
+                
+                        
+                body={"requests":request_}
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_,body=body)
+                request.execute()
+                self.getsheet()
         @property
         def title(self):
             return self._title
