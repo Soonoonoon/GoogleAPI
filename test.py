@@ -75,7 +75,6 @@ if Drive:
 
     
 # = = = =  Sheet = = = =
-
     #Before use the sheet api , you need to login first ( >>Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") )
 
     sheet=gdapi.Sheet(sheetid)  # if no sheetid it will create a newsheet
@@ -129,7 +128,7 @@ if Drive:
     sheet.delete("A1:F1")    #A1~F1 will be deleted
 
     # Color cell
-    sheet.setcolor("A1",(255,120,0),,) # (RangeSetColor,Tuple(R,G,B),HexColor,Alpha=0.5,SheetId=0)
+    sheet.setcolor("A1",(255,120,0),) # (RangeSetColor,Tuple(R,G,B),HexColor,Alpha=0.5,SheetId=0)
     #              Description                  |   Accept  Value
     #----------------------------------------------------------------
     #  RangeSetColor = set color on which cell  | Set  > "1:1"= "A1"
@@ -190,10 +189,55 @@ if Drive:
     # Find and Replace
     find='string'           #   find     string
     reapcle='test'          #   replace string
-    find_all_sheet_or_not=0 #   0=find/replace only one page,1=find/replace all page
-    sheet.FNR(find,replace,find_all_sheet_or_not,*sheetid)
+    allsheet=0              #   0=find/replace only one page,1=find/replace all page | [Optional]
+    
+    sheet.FNR(find,replace,*sheetID,**kwargs)
 
+    # example :
+    id=123456789            #   must be positive number
+    sheet.FNR(find,replace,id=id)
+    # id set method2
+    sheet.FNR(find,replace,id)
+    
+    # FNR by specify workbook name
+    name="workbookname"     #   must be string
+    sheet.FNR(find,replace,name=name)
+
+    # FNR of all spreadsheet    
+    sheet.FNR(find,replace,allsheet=1)
+    
     # Sort Data
-    ChoseColumn=1    #  sort column=1 data
-    UpOrDown=0       #  0/1  ( DESCENDING / ASCENDING )
-    sheet.sort(ChoseColumn,UpOrDown)
+    colname="ABC"    #  sort by colname
+    col=1            #  sort by column 1 
+    UpOrDown=0       #  0/1  ( DESCENDING / ASCENDING )  ,Defalut 1
+    #sheet.sort_col(colname,*UpOrDown,**col)
+    sheet.sort_col('',0,col=col)    # DESCENDING and sort by col 1
+    sheet.sort_col(colname,1)       # ASCENDING  and sort by colname
+
+    # Use Formula
+    
+    workrange= "A1"   # put formula in which cell
+    
+    formula="sum(B1:B20)"  # Excel/Sheet Formula format 
+    sheet.formula(workrange,formula,*sheetid)
+     # If what to use match function: "match("+findwhat+","+findrange+",0)
+    workrange= "A1" 
+    findwhat="name"
+    findrange="B1:B20"
+    formula='match("'+findwhat+","+findrange+'",0)'
+    sheet.formula(workrange,formula,*sheetid)
+
+     # use formula get result in different workbook
+    sheet.formula("workbook2!B25",'sum(workbook1!B2:B5)')  # Get result in workbook2>B25 , execute function in wrokbook1 >B2:B25
+
+    # get col index
+    findname="ABC"
+    index_col=sheet.get_col(findname,*sheetID)  # return index_col number
+
+    # get row index
+    findname="ABC"
+    index_row=sheet.get_col(findname,*sheetID)  # return index_row number
+
+    # get_subsheet id
+    sheet_id=sheet.getsub_id(findname)
+    
