@@ -902,10 +902,14 @@ class Sheet:
                self._id=id_in[0]
                id_=id_in[0]
                try:
-                 self.getsheet()
+                   self.getsheet()
                except Exception as Err:
+                   
+                   
                    if 'not found' in str(Err):
                        print("Your SheetID was not found")
+                   else:
+                       raise TypeError("Login drive first >> drive = gdi.Drive(json or pickle path)")
             else:
                 timenow=datetime.datetime.now().strftime("%H%M%S")
                 if kwargs:
@@ -1202,6 +1206,7 @@ class Sheet:
             if sheetID:
                   sheetId=sheetID[0]
             if kwargs:
+                
                 if 'sheetname' in kwargs:
                     sheet_name=kwargs['sheetname']
              
@@ -1209,8 +1214,9 @@ class Sheet:
                 
                         sheet_id_,name_=self.sub[i]
                         if sheet_name == name_:
-                            
+                           
                             return sheet_id_
+                        
                     return None
                     
             return sheetId
@@ -1458,9 +1464,9 @@ class Sheet:
         def FNR(self,find_str,replace_str,*sheetID,**kwargs):
                 #  if set FNR_allsheet , sheetId must be None
                   sheetId=0
+                  sheetId=self.__arg_return_sheetid(*sheetID,**kwargs)
                   FNR_allsheet=0
-                  if sheetID:
-                      sheetId=sheetID[0] 
+                  
                   if kwargs:
                      
                       if 'id' in kwargs:
@@ -1482,11 +1488,11 @@ class Sheet:
                           if sheet_id:
                               sheetId=sheet_id
                           
-                                 
-                  if FNR_allsheet:
-                      FNR_allsheet=True
-                  else:
-                      FNR_allsheet=False
+                  if not sheetId :
+                   if FNR_allsheet:
+                       FNR_allsheet=True
+                   else:
+                       FNR_allsheet=False
                   
                   if FNR_allsheet:    
                           body=      {"requests":[{'findReplace':{
