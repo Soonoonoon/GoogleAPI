@@ -62,7 +62,6 @@ def size_byte(size):
           if i==1:
               return str(size)+' Byte'
 class Drive:
-    
     PickleFile=''
     json_path=''
     def __init__(self,*args):
@@ -70,6 +69,7 @@ class Drive:
         self._download_path=Download_path
         if args:
                         if '.json' in str(args):
+                                
                                 self.chose_json(args[0])
                         elif '.pickle' in str(args):
                                 self.chose_pickle(args[0])
@@ -85,13 +85,16 @@ class Drive:
          else:
              print("Path is not exist")
     def chose_json(self,path):
-        global json_path,service,service_sheet
-        json_path=path
-        service,service_sheet=self.main()
-        self.json_path=path
+            global service,service_sheet
+            self.json_path=path
+          
+            service,service_sheet=self.main()
+          
+                   
+            self.json_path=path
     def chose_pickle(self,path):
-            global PickleFile,service,service_sheet
-            PickleFile=path
+            global service,service_sheet
+            
             self.PickleFile=path
             service,service_sheet=self.main()
     def emptytrash(self):
@@ -641,9 +644,12 @@ class Drive:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists(PickleFile):
-            with open(PickleFile, 'rb') as token:
+        
+        if os.path.exists(self.PickleFile):
+            
+            with open(self.PickleFile, 'rb') as token:
                 creds = pickle.load(token)
+              
         # If there are no (valid) credentials available, let the user log in.
         try:
          if not creds or not creds.valid:
@@ -651,7 +657,7 @@ class Drive:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    json_path, SCOPES)
+                    self.json_path, SCOPES)
                 creds = flow.run_local_server(port=8012)
             # Save the credentials for the next run
             with open(PickleFile, 'wb') as token:
@@ -660,6 +666,7 @@ class Drive:
             print("▲ If you don't set the json or pickle path, plz set the path before use ")
             print("Use function: \n 1. chose_pickle (pickle_path)\n 2. chose_json   (json_path)")
             return
+        
         service = build('drive', 'v3', credentials=creds)
         service_sheet = build('sheets', 'v4', credentials=creds)
              
