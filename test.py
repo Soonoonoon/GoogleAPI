@@ -8,9 +8,12 @@ import time
 # Login Function:
 Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,etc...
 
+# json file accept : 
+#       1. credentials json of OAuth2.0
+#       2. keys json of service account
 # if you want to change Drive variable to use another Credential
 # use >> Drive.chose_json(path) or Drive.chose_pickle(path)
-# if you want to create a new sheet
+
 if Drive:
 
     
