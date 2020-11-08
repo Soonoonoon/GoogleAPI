@@ -11,6 +11,7 @@ import re
 import datetime
 from  pprint  import pprint
 import sys
+non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 # If modifying these scopes, delete the file token.pickle.
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -19,9 +20,30 @@ Download_path=os.path.split(sys.argv[0])[0]
 #mimetype dict
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
 # number   <==> alphabet 
-num_alphabet = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z', 27: 'aa', 28: 'ab', 29: 'ac', 30: 'ad', 31: 'ae', 32: 'af', 33: 'ag', 34: 'ah', 35: 'ai', 36: 'aj', 37: 'ak', 38: 'al', 39: 'am', 40: 'an', 41: 'ao', 42: 'ap', 43: 'aq', 44: 'ar', 45: 'as', 46: 'at', 47: 'au', 48: 'av', 49: 'aw', 50: 'ax', 51: 'ay', 52: 'az', 54: 'ba', 55: 'bb', 56: 'bc', 57: 'bd', 58: 'be', 59: 'bf', 60: 'bg', 61: 'bh', 62: 'bi', 63: 'bj', 64: 'bk', 65: 'bl', 66: 'bm', 67: 'bn', 68: 'bo', 69: 'bp', 70: 'bq', 71: 'br', 72: 'bs', 73: 'bt', 74: 'bu', 75: 'bv', 76: 'bw', 77: 'bx', 78: 'by', 79: 'bz', 81: 'ca', 82: 'cb', 83: 'cc', 84: 'cd', 85: 'ce', 86: 'cf', 87: 'cg', 88: 'ch', 89: 'ci', 90: 'cj', 91: 'ck', 92: 'cl', 93: 'cm', 94: 'cn', 95: 'co', 96: 'cp', 97: 'cq', 98: 'cr', 99: 'cs', 100: 'ct', 101: 'cu', 102: 'cv', 103: 'cw', 104: 'cx', 105: 'cy', 106: 'cz', 108: 'da', 109: 'db', 110: 'dc', 111: 'dd', 112: 'de', 113: 'df', 114: 'dg', 115: 'dh', 116: 'di', 117: 'dj', 118: 'dk', 119: 'dl', 120: 'dm', 121: 'dn', 122: 'do', 123: 'dp', 124: 'dq', 125: 'dr', 126: 'ds', 127: 'dt', 128: 'du', 129: 'dv', 130: 'dw', 131: 'dx', 132: 'dy', 133: 'dz', 135: 'ea', 136: 'eb', 137: 'ec', 138: 'ed', 139: 'ee', 140: 'ef', 141: 'eg', 142: 'eh', 143: 'ei', 144: 'ej', 145: 'ek', 146: 'el', 147: 'em', 148: 'en', 149: 'eo', 150: 'ep', 151: 'eq', 152: 'er', 153: 'es', 154: 'et', 155: 'eu', 156: 'ev', 157: 'ew', 158: 'ex', 159: 'ey', 160: 'ez', 162: 'fa', 163: 'fb', 164: 'fc', 165: 'fd', 166: 'fe', 167: 'ff', 168: 'fg', 169: 'fh', 170: 'fi', 171: 'fj', 172: 'fk', 173: 'fl', 174: 'fm', 175: 'fn', 176: 'fo', 177: 'fp', 178: 'fq', 179: 'fr', 180: 'fs', 181: 'ft', 182: 'fu', 183: 'fv', 184: 'fw', 185: 'fx', 186: 'fy', 187: 'fz', 189: 'ga', 190: 'gb', 191: 'gc', 192: 'gd', 193: 'ge', 194: 'gf', 195: 'gg', 196: 'gh', 197: 'gi', 198: 'gj', 199: 'gk', 200: 'gl', 201: 'gm', 202: 'gn', 203: 'go', 204: 'gp', 205: 'gq', 206: 'gr', 207: 'gs', 208: 'gt', 209: 'gu', 210: 'gv', 211: 'gw', 212: 'gx', 213: 'gy', 214: 'gz', 216: 'ha', 217: 'hb', 218: 'hc', 219: 'hd', 220: 'he', 221: 'hf', 222: 'hg', 223: 'hh', 224: 'hi', 225: 'hj', 226: 'hk', 227: 'hl', 228: 'hm', 229: 'hn', 230: 'ho', 231: 'hp', 232: 'hq', 233: 'hr', 234: 'hs', 235: 'ht', 236: 'hu', 237: 'hv', 238: 'hw', 239: 'hx', 240: 'hy', 241: 'hz', 243: 'ia', 244: 'ib', 245: 'ic', 246: 'id', 247: 'ie', 248: 'if', 249: 'ig', 250: 'ih', 251: 'ii', 252: 'ij', 253: 'ik', 254: 'il', 255: 'im', 256: 'in', 257: 'io', 258: 'ip', 259: 'iq', 260: 'ir', 261: 'is', 262: 'it', 263: 'iu', 264: 'iv', 265: 'iw', 266: 'ix', 267: 'iy', 268: 'iz', 270: 'ja', 271: 'jb', 272: 'jc', 273: 'jd', 274: 'je', 275: 'jf', 276: 'jg', 277: 'jh', 278: 'ji', 279: 'jj', 280: 'jk', 281: 'jl', 282: 'jm', 283: 'jn', 284: 'jo', 285: 'jp', 286: 'jq', 287: 'jr', 288: 'js', 289: 'jt', 290: 'ju', 291: 'jv', 292: 'jw', 293: 'jx', 294: 'jy', 295: 'jz', 297: 'ka', 298: 'kb', 299: 'kc'}
+num_alphabet = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
 # alphabet <==> number
-alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26, 'aa': 27, 'ab': 28, 'ac': 29, 'ad': 30, 'ae': 31, 'af': 32, 'ag': 33, 'ah': 34, 'ai': 35, 'aj': 36, 'ak': 37, 'al': 38, 'am': 39, 'an': 40, 'ao': 41, 'ap': 42, 'aq': 43, 'ar': 44, 'as': 45, 'at': 46, 'au': 47, 'av': 48, 'aw': 49, 'ax': 50, 'ay': 51, 'az': 52, 'ba': 54, 'bb': 55, 'bc': 56, 'bd': 57, 'be': 58, 'bf': 59, 'bg': 60, 'bh': 61, 'bi': 62, 'bj': 63, 'bk': 64, 'bl': 65, 'bm': 66, 'bn': 67, 'bo': 68, 'bp': 69, 'bq': 70, 'br': 71, 'bs': 72, 'bt': 73, 'bu': 74, 'bv': 75, 'bw': 76, 'bx': 77, 'by': 78, 'bz': 79, 'ca': 81, 'cb': 82, 'cc': 83, 'cd': 84, 'ce': 85, 'cf': 86, 'cg': 87, 'ch': 88, 'ci': 89, 'cj': 90, 'ck': 91, 'cl': 92, 'cm': 93, 'cn': 94, 'co': 95, 'cp': 96, 'cq': 97, 'cr': 98, 'cs': 99, 'ct': 100, 'cu': 101, 'cv': 102, 'cw': 103, 'cx': 104, 'cy': 105, 'cz': 106, 'da': 108, 'db': 109, 'dc': 110, 'dd': 111, 'de': 112, 'df': 113, 'dg': 114, 'dh': 115, 'di': 116, 'dj': 117, 'dk': 118, 'dl': 119, 'dm': 120, 'dn': 121, 'do': 122, 'dp': 123, 'dq': 124, 'dr': 125, 'ds': 126, 'dt': 127, 'du': 128, 'dv': 129, 'dw': 130, 'dx': 131, 'dy': 132, 'dz': 133, 'ea': 135, 'eb': 136, 'ec': 137, 'ed': 138, 'ee': 139, 'ef': 140, 'eg': 141, 'eh': 142, 'ei': 143, 'ej': 144, 'ek': 145, 'el': 146, 'em': 147, 'en': 148, 'eo': 149, 'ep': 150, 'eq': 151, 'er': 152, 'es': 153, 'et': 154, 'eu': 155, 'ev': 156, 'ew': 157, 'ex': 158, 'ey': 159, 'ez': 160, 'fa': 162, 'fb': 163, 'fc': 164, 'fd': 165, 'fe': 166, 'ff': 167, 'fg': 168, 'fh': 169, 'fi': 170, 'fj': 171, 'fk': 172, 'fl': 173, 'fm': 174, 'fn': 175, 'fo': 176, 'fp': 177, 'fq': 178, 'fr': 179, 'fs': 180, 'ft': 181, 'fu': 182, 'fv': 183, 'fw': 184, 'fx': 185, 'fy': 186, 'fz': 187, 'ga': 189, 'gb': 190, 'gc': 191, 'gd': 192, 'ge': 193, 'gf': 194, 'gg': 195, 'gh': 196, 'gi': 197, 'gj': 198, 'gk': 199, 'gl': 200, 'gm': 201, 'gn': 202, 'go': 203, 'gp': 204, 'gq': 205, 'gr': 206, 'gs': 207, 'gt': 208, 'gu': 209, 'gv': 210, 'gw': 211, 'gx': 212, 'gy': 213, 'gz': 214, 'ha': 216, 'hb': 217, 'hc': 218, 'hd': 219, 'he': 220, 'hf': 221, 'hg': 222, 'hh': 223, 'hi': 224, 'hj': 225, 'hk': 226, 'hl': 227, 'hm': 228, 'hn': 229, 'ho': 230, 'hp': 231, 'hq': 232, 'hr': 233, 'hs': 234, 'ht': 235, 'hu': 236, 'hv': 237, 'hw': 238, 'hx': 239, 'hy': 240, 'hz': 241, 'ia': 243, 'ib': 244, 'ic': 245, 'id': 246, 'ie': 247, 'if': 248, 'ig': 249, 'ih': 250, 'ii': 251, 'ij': 252, 'ik': 253, 'il': 254, 'im': 255, 'in': 256, 'io': 257, 'ip': 258, 'iq': 259, 'ir': 260, 'is': 261, 'it': 262, 'iu': 263, 'iv': 264, 'iw': 265, 'ix': 266, 'iy': 267, 'iz': 268, 'ja': 270, 'jb': 271, 'jc': 272, 'jd': 273, 'je': 274, 'jf': 275, 'jg': 276, 'jh': 277, 'ji': 278, 'jj': 279, 'jk': 280, 'jl': 281, 'jm': 282, 'jn': 283, 'jo': 284, 'jp': 285, 'jq': 286, 'jr': 287, 'js': 288, 'jt': 289, 'ju': 290, 'jv': 291, 'jw': 292, 'jx': 293, 'jy': 294, 'jz': 295, 'ka': 297, 'kb': 298, 'kc': 299}
+alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
+
+
+def Exapnd_dict_alphabet_number():
+   count=1
+
+   start=0
+   bigcount=1
+   for j in range(27,1000):
+        count=count%27
+        if count==0:
+                start=1
+                count+=1
+                continue
+        if count==1 and  start:bigcount+=1
+        alp=num_alphabet[count]
+        combalp=num_alphabet[bigcount]+alp
+        alphabet_num[combalp]=j
+        num_alphabet[j]=combalp
+        count+=1
+Exapnd_dict_alphabet_number()
+
 def RGB_to_HEX(R,G,B):
 
     Rh=hex(R).replace('0x','')
@@ -44,14 +66,14 @@ def HEX_to_RGB(Hex):
 
 
 def format_str(namelimit,name):
-	name_len=namelimit
-	try:
-		name_len=len(name.encode('big5'))
-	except:
-		pass
-	fill_name=namelimit-name_len
-	name_=name+(' '.encode('big5')*fill_name).decode('big5')
-	return name_
+        name_len=namelimit
+        try:
+                name_len=len(name.encode('big5'))
+        except:
+                pass
+        fill_name=namelimit-name_len
+        name_=name+(' '.encode('big5')*fill_name).decode('big5')
+        return name_
 def size_byte(size):
         dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
         dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
@@ -65,15 +87,15 @@ def size_byte(size):
 class Drive:
     PickleFile=''
     json_path=''
-    def __init__(self,*args):
+    def __init__(self,*credential_path):
         
         self._download_path=Download_path
-        if args:
-                        if '.json' in str(args):
+        if credential_path:
+                        if '.json' in str(credential_path):
                                 
-                                self.chose_json(args[0])
-                        elif '.pickle' in str(args):
-                                self.chose_pickle(args[0])
+                                self.chose_json(credential_path[0])
+                        elif '.pickle' in str(credential_path):
+                                self.chose_pickle(credential_path[0])
                         else:
                             raise TypeError(" Only acccept json or pickle file")
                             return 
@@ -673,6 +695,7 @@ class Drive:
                     flow = InstalledAppFlow.from_client_secrets_file(
                         self.json_path, SCOPES)
                     creds = flow.run_local_server(port=8012)
+                    print(creds)
                     # Save the credentials for the next run
                     self.PickleFile='token.pickle'
                     with open('token.pickle', 'wb') as token:
@@ -898,117 +921,456 @@ class Sheet:
                       self._id=self.create("NewSheet"+str(timenow),**kwargs)
                       id_=self._id
                       print("Can't find SheetID , automake  NewSheet"+str(timenow))
-        def sort_col(self,name,*Updown,**col):
-            
-            
-            sheetId=0
-            updown=1
-            if col:
-                if 'col' in col:
-                    chose_col=int(col['col'])-1
-                    if chose_col<0:
-                        chose_col=0
-            chose_col_=str(self.get_col(name))
-            
-            if  chose_col_ and re.findall('\d+',chose_col_,re.IGNORECASE):
-                chose_col=int(chose_col_)-1
-            else:
-                if chose_col:pass
-                else:return
-            if Updown:
-                if Updown[0]==1:updown=1
-                else:updown=0
-            if updown:
-                updown='ASCENDING'
-            else:
-                updown='DESCENDING'
-            
-            body=        {
-              "requests": [
-                {
-                  "sortRange": {
-                    "range": {
-                      "sheetId": sheetId,
-                      "startRowIndex": 1,
-                      "endRowIndex": 50,
-                      "startColumnIndex": 0,
-                      "endColumnIndex": 50
-                    },
-                    "sortSpecs": [
-                      {
-                        "dimensionIndex": int(chose_col),
-                        "sortOrder": updown
-                      }]  }
-                    }
-                  ]
-                }
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def get_col_index(self,colname,*sheetID):
-                sheetId=0
-                if sheetID:
-                      sheetId=sheetID[0]
-                name_chose=''
-                for j in self.sub:
-                    sheet_id_,name_=self.sub[j]
-                    if sheetId == sheet_id_:
-                        name_chose=name_+'!'
-                        break
-                formula='match("'+colname+'",'+str(name_chose)+'a1:in1,0)'
-             
-               
-                self.formula(self.formula_use_data,formula)
+        def ___get__index_start_end(self,Colrange):
                 
-                
-                if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
-                  colnum=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
-                  return colnum
+                if ',' in Colrange:
+                    Colrange_1,Colrange_2=Colrange.split(',')
+                    if not Colrange_1.isnumeric() and not Colrange_2.isnumeric():
+                        Colrange_1,Colrange_2=(self._find_columb_alphabet_to_number(Colrange))
+                    elif not Colrange_1.isnumeric() and  Colrange_2.isnumeric():
+                        Colrange_1,_=self._find_columb_alphabet_to_number(Colrange_1)
+                    elif Colrange_1.isnumeric() and  not Colrange_2.isnumeric():
+                        Colrange_2,_=self._find_columb_alphabet_to_number(Colrange_2)
+                    
+                elif Colrange and ":" in str(Colrange):
+                    Colrange_1,Colrange_2=Colrange.split(':')
+                    
+                    if not Colrange_1.isnumeric() and not Colrange_2.isnumeric():
+                             Colrange_1,Colrange_2=self._find_columb_alphabet_to_number(Colrange)
+                    elif not Colrange_1.isnumeric() and  Colrange_2.isnumeric():
+                        Colrange_1,_=self._find_columb_alphabet_to_number(Colrange_1)
+                    elif Colrange_1.isnumeric() and  not Colrange_2.isnumeric():
+                        Colrange_2,_=self._find_columb_alphabet_to_number(Colrange_2)
                 else:
-                  print('◭ Error: '+str(colname)+" Was Not Found")
-                  return None
-              
-                return int(colnum)
-        def get_col(self,findname,*sheetID):
-                sheetId=0
-                if sheetID:sheetId=sheetID[0]
-                name_chose=''
-                for j in self.sub:
-                    sheet_id_,name_=self.sub[j]
-                    if sheetId == sheet_id_:
-                        name_chose=name_+'!'
-                        break
+                    if Colrange.isnumeric():
+                        Colrange_1,Colrange_2=Colrange,Colrange
+                    else:
+                        Colrange_1,Colrange_2=(self._find_columb_alphabet_to_number(Colrange))
+                        if Colrange_2==None:
+                            Colrange_2=Colrange_1
+                return Colrange_1,Colrange_2
+        def adjust_col_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetID,**kwargs):
+                    Colrange=str(Colrange)
+                    Rowrange=str(Rowrange)
                     
+                    sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                    if sheetId==None:return "Not found this sheet name"
+                    Rowrange_1,Rowrange_2=1,1
+                    Colrange_1,Colrange_2=1,1
+                    Colrange_1,Colrange_2=self.___get__index_start_end(Colrange)
+                                
+                    if Rowrange and ":" in str(Rowrange):
+                        Rowrange_1,Rowrange_2=Rowrange.split(":")
+                        if not Rowrange_1:
+                            Rowrange_1=0
+                    elif  Rowrange and "," in str(Rowrange):
+                        Rowrange_1,Rowrange_2=Rowrange.split(":")
+                        if not Rowrange_1:
+                            Rowrange_1=0
+                    else:
+                        Rowrange_1,Rowrange_2=Rowrange,Rowrange
+                        
+                    if not (Rowrange_1) : Rowrange_1=1
+                    if not (Colrange_1) : Colrange_1=1
+                    body={
+                          "requests": [
+                            {
+                              "updateDimensionProperties": {
+                                "range": {
+                                  "sheetId": sheetId,
+                                  "dimension": "COLUMNS",
+                                  "startIndex": int(Colrange_1)-1,
+                                  "endIndex":   int(Colrange_2)
+                                },
+                                "properties": {
+                                  "pixelSize": Col_pixel
+                                },
+                                "fields": "pixelSize"
+                              }
+                            },
+                            {
+                              "updateDimensionProperties": {
+                                "range": {
+                                  "sheetId": sheetId,
+                                  "dimension": "ROWS",
+                                  "startIndex": int(Rowrange_1)-1,
+                                  "endIndex":   int(Rowrange_2)
+                                },
+                                "properties": {
+                                  "pixelSize": Row_pixel
+                                },
+                                "fields": "pixelSize"
+                              }
+                            }
+                          ]
+                        }
+                    request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def adjust_row(self,Rowrange,Row_pixel,*sheetID,**kwargs):
+           
+                    Rowrange=str(Rowrange)
+                    sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                    if sheetId==None:return "Not found this sheet name"
+                    Rowrange_1,Rowrange_2=1,1
                     
-
-                formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,column('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
-                self.formula(self.formula_use_data,formula)
-                if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
-                  col=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
-                  return col
-                else:
-                  print('◭ Error: '+str(findname)+" Was Not Found")
-                  return None
-        def get_row(self,findname,*sheetID):
-                sheetId=0
-                if sheetID:sheetId=sheetID[0]
-                name_chose=''
-                for j in self.sub:
-                    sheet_id_,name_=self.sub[j]
-                    if sheetId == sheet_id_:
-                        name_chose=name_+'!'
-                        break
+                    if Rowrange and ":" in str(Rowrange):
+                        Rowrange_1,Rowrange_2=Rowrange.split(":")
+                        if not Rowrange_1:
+                            Rowrange_1=0
+                    elif  Rowrange and "," in str(Rowrange):
+                        Rowrange_1,Rowrange_2=Rowrange.split(",")
+                        if not Rowrange_1:
+                            Rowrange_1=0
+                    else:
+                        Rowrange_1,Rowrange_2=Rowrange,Rowrange
+                        
                     
+                    if not (Rowrange_1): Rowrange_1=1
+                    body={
+                          "requests": [
+                          
+                            {
+                              "updateDimensionProperties": {
+                                "range": {
+                                  "sheetId": sheetId,
+                                  "dimension": "ROWS",
+                                  "startIndex": int(Rowrange_1)-1,
+                                  "endIndex":   int(Rowrange_2)
+                                },
+                                "properties": {
+                                  "pixelSize": Row_pixel
+                                },
+                                "fields": "pixelSize"
+                              }
+                            }
+                          ]
+                        }
+                    request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
                     
-
-                formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,ROW('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
-                self.formula(self.formula_use_data,formula)
-                if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
-                  row=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
-                  return row
-                else:
-                  print('◭ Error: '+str(findname)+" Was Not Found")
-                  return None
-            
+        def adjust_col(self,Colrange,Col_pixel,*sheetID,**kwargs):
+                    Colrange=str(Colrange)
+                    
+                    sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                    if sheetId==None:return "Not found this sheet name"
+                    
+                    Colrange_1,Colrange_2=1,1
+                    Colrange_1,Colrange_2=self.___get__index_start_end(Colrange)
+                    
+                    if not (Colrange_1) : Colrange_1=1
+                   
+                    body={
+                          "requests": [
+                            {
+                              "updateDimensionProperties": {
+                                "range": {
+                                  "sheetId": sheetId,
+                                  "dimension": "COLUMNS",
+                                  "startIndex": int(Colrange_1)-1,
+                                  "endIndex":   int(Colrange_2)
+                                },
+                                "properties": {
+                                  "pixelSize": Col_pixel
+                                },
+                                "fields": "pixelSize"
+                              }
+                            }
+                          ]
+                        }
+                    request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
         
+        def delete_row(self,range_,*sheetID,**kwargs):
+                   start,end=range_
+                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                   if sheetId==None:return "Not found this sheet name"
+                   
+                   body=   {
+                      "requests": [
+                        {
+                          "deleteDimension": {
+                            "range":{
+                                 "sheetId": sheetId,
+                                  "dimension": "ROWS",
+                                  "startIndex": int(start)-1,
+                                  "endIndex": end
+
+
+                                }}}]}
+                           
+                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+              
+        def append_row(self,length,*sheetID,**kwargs):
+                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                   if sheetId==None:return "Not found this sheet name"
+                   
+                   body=   {
+                      "requests": [
+                        {
+                          "appendDimension": {
+                            "sheetId": sheetId,
+                            "dimension": "ROWS",
+                            "length": length
+                          }
+                        }
+                        
+                    ]}
+                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def _find_columb_alphabet_to_number(self,text):
+                text=str(text)
+                if ':' in text or ',' in text:
+                     if '!' in text:
+                        text=text[text.find('!')+1:]
+                     if ':' in text:   
+                         _A_,_B_=text.split(':')
+                     elif ',' in text:   
+                         _A_,_B_=text.split(',')
+                     find_alphaber1= re.findall('[a-z]{1,3}',_A_,re.IGNORECASE)
+                     find_alphaber2= re.findall('[a-z]{1,3}',_B_,re.IGNORECASE)
+                    
+                     if find_alphaber1 and find_alphaber2:
+                         return alphabet_num[find_alphaber1[0].lower()],alphabet_num[find_alphaber2[0].lower()]
+                     elif not find_alphaber1 and find_alphaber2:
+                         return 0,alphabet_num[find_alphaber2[0].lower()]
+                     elif find_alphaber1 and not find_alphaber2:
+                         return alphabet_num[find_alphaber1[0].lower()],0
+                     else:
+                         
+                         return _A_,_B_
+                     
+                find_alphaber= re.findall('[a-z]{1,3}',text,re.IGNORECASE)
+                if find_alphaber:
+                    return alphabet_num[find_alphaber[0].lower()],None
+                return text,None
+        def delete_col(self,range_,*sheetID,**kwargs):
+                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                   if sheetId==None:return "Not found this sheet name"
+                   if re.findall('[a-z]',str(range_),re.IGNORECASE):
+                       start,end=self._find_columb_alphabet_to_number(range_)
+                       if end==None:
+                          end= start 
+                   else:
+                       start,end=range_
+                   
+                   body=   {
+                      "requests": [
+                        {
+                          "deleteDimension": {
+                            "range":{
+                                 "sheetId": sheetId,
+                                  "dimension": "COLUMNS",
+                                  "startIndex": int(start)-1,
+                                  "endIndex": int(end)
+                                }}}]}
+                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()           
+        def append_col(self,length,*sheetID,**kwargs):
+                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                   if sheetId==None:return "Not found this sheet name"
+                   
+                   body=  {"requests":[{
+                          "appendDimension": {
+                            "sheetId": sheetId,
+                            "dimension": "COLUMNS",
+                            "length": length}
+                          }
+                        ]}
+                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        def __arg_return_sheetname(self,*sheetID,**kwargs):
+            sheetId=0
+            sheet_name=''
+            if sheetID:
+                  sheetId=sheetID[0]
+            if kwargs:
+                if 'sheetname' in kwargs:
+                    sheet_name=kwargs['sheetname']
+                    for i in self.sub:
+                
+                        sheet_id_,name_=self.sub[i]
+                        if sheet_name == name_:
+                            
+                            return name_
+                    return None
+            if not sheet_name:
+              for i in self.sub:
+                
+                sheet_id_,name_=self.sub[i]
+                if sheetId == sheet_id_:
+                    
+                    return name_
+                    
+            return None
+        def __arg_return_sheetid(self,*sheetID,**kwargs):
+            sheetId=0
+            sheet_name=''
+            if sheetID:
+                  sheetId=sheetID[0]
+            if kwargs:
+                if 'sheetname' in kwargs:
+                    sheet_name=kwargs['sheetname']
+             
+                    for i in self.sub:
+                
+                        sheet_id_,name_=self.sub[i]
+                        if sheet_name == name_:
+                            
+                            return sheet_id_
+                    return None
+                    
+            return sheetId
+        
+        def sort_col(self,name,*Updown,**col):
+                
+                
+                sheetId=0
+                updown=1
+                if col:
+                    if 'col' in col:
+                        chose_col=int(col['col'])-1
+                        if chose_col<0:
+                            chose_col=0
+                chose_col_=str(self.get_col(name))
+                
+                if  chose_col_ and re.findall('\d+',chose_col_,re.IGNORECASE):
+                    chose_col=int(chose_col_)-1
+                else:
+                    if chose_col:pass
+                    else:return
+                if Updown:
+                    if Updown[0]==1:updown=1
+                    else:updown=0
+                if updown:
+                    updown='ASCENDING'
+                else:
+                    updown='DESCENDING'
+                
+                body=        {
+                  "requests": [
+                    {
+                      "sortRange": {
+                        "range": {
+                          "sheetId": sheetId,
+                          "startRowIndex": 1,
+                          "endRowIndex": 50,
+                          "startColumnIndex": 0,
+                          "endColumnIndex": 50
+                        },
+                        "sortSpecs": [
+                          {
+                            "dimensionIndex": int(chose_col),
+                            "sortOrder": updown
+                          }]  }
+                        }
+                      ]
+                    }
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
+        
+        def get_sheet_size(self,sheetname): # check specific worksheet Max column and Max row
+            response=service_sheet.spreadsheets().values().get(spreadsheetId=self.id, range=sheetname ).execute()['range']
+            
+            index1=response.find('!')
+            range1,range2=response[index1+1:].split(':')
+            max_row=re.findall('\d+',str(range2),re.IGNORECASE)[0]
+            max_column=alphabet_num[re.findall('[a-z]{1,3}',str(range2),re.IGNORECASE)[0].lower()]
+            return max_column,max_row
+        def find_string(self,find_sting,*sheetID,**kwargs):
+            find_list=[]
+            sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+            if not sheet_name:return "Not Found"
+            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
+            
+            for i in range(0,len(response)):
+                for j in range (0,len(response[i])):
+                   
+                   if find_sting == str(response[i][j].translate(non_bmp_map)):
+                      find_list.append((j+1,i+1))
+                      # return (column,row)
+                    
+               
+            return find_list
+        def get_col_index(self,colname,*sheetID,**kwargs):
+            sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+            if not sheet_name:return "Not Found"
+            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=sheet_name ).execute()
+            for i in response['valueRanges']:
+                for j in range(0,len(i['values'][0])):
+                   
+                        if colname == str(i['values'][0][j].translate(non_bmp_map)):
+                                     return j+1
+            return "Not Found"
+                            
+        
+        def get_row_index(self,rowname,*sheetID,**kwargs): # return first find row index        
+            sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+            if not sheet_name:return "Not Found"
+            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
+            
+            for i in range(0,len(response)):
+                for j in range (0,len(response[i])):
+                   if rowname == str(response[i][j].translate(non_bmp_map)):
+                       return i+1
+               
+            return "Not Found"
+        def __formula__get_col_index(self,colname,*sheetID):
+            sheetId=0
+            if sheetID:
+                  sheetId=sheetID[0]
+            name_chose=''
+            for j in self.sub:
+                sheet_id_,name_=self.sub[j]
+                if sheetId == sheet_id_:
+                    name_chose=name_+'!'
+                    break
+            formula='match("'+colname+'",'+str(name_chose)+'a1:in1,0)'
+         
+           
+            self.formula(self.formula_use_data,formula)
+            
+            
+            if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+              colnum=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+              return colnum
+            else:
+              print('◭ Error: '+str(colname)+" Was Not Found")
+              return None
+          
+            return int(colnum)
+        def __formula__get_col(self,findname,*sheetID):
+            sheetId=0
+            if sheetID:sheetId=sheetID[0]
+            name_chose=''
+            for j in self.sub:
+                sheet_id_,name_=self.sub[j]
+                if sheetId == sheet_id_:
+                    name_chose=name_+'!'
+                    break
+                
+                
+
+            formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,column('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
+            self.formula(self.formula_use_data,formula)
+            if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+              col=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+              return col
+            else:
+              print('◭ Error: '+str(findname)+" Was Not Found")
+              return None
+        def __formula__get_row(self,findname,*sheetID):
+            sheetId=0
+            if sheetID:sheetId=sheetID[0]
+            name_chose=''
+            for j in self.sub:
+                sheet_id_,name_=self.sub[j]
+                if sheetId == sheet_id_:
+                    name_chose=name_+'!'
+                    break
+                
+                
+
+            formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,ROW('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
+            self.formula(self.formula_use_data,formula)
+            if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+              row=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+              return row
+            else:
+              print('◭ Error: '+str(findname)+" Was Not Found")
+              return None
         def formula(self,cell,formula,*sheetID):
                   sheetId=0
                  
@@ -1211,147 +1573,7 @@ class Sheet:
                      }
             request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
         
-        def adjust_col_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetid):
-                sheetId=0
-                Rowrange_1,Rowrange_2=1,1
-                Colrange_1,Colrange_2=1,1
-                if Colrange and ":" in str(Colrange):
-                    Colrange_1,Colrange_2=Colrange.split(':')
-                    if re.findall('[a-z]',Colrange_1,re.IGNORECASE) and  re.findall('[a-z]',Colrange_2,re.IGNORECASE) :
-                            Colrange_1=alphabet_num[re.findall('[a-z]',Colrange_1,re.IGNORECASE)[0].lower()]
-                            Colrange_2=alphabet_num[re.findall('[a-z]',Colrange_2,re.IGNORECASE)[0].lower()]
-                            
-                if Rowrange and ":" in str(Rowrange):
-                    Rowrange_1,Rowrange_2=Rowrange.split(":")
-                    
-                    
-                if sheetid:
-                    sheetId=sheetid[0]
-                body={
-                      "requests": [
-                        {
-                          "updateDimensionProperties": {
-                            "range": {
-                              "sheetId": sheetId,
-                              "dimension": "COLUMNS",
-                              "startIndex": int(Colrange_1)-1,
-                              "endIndex":   int(Colrange_2)-1
-                            },
-                            "properties": {
-                              "pixelSize": Col_pixel
-                            },
-                            "fields": "pixelSize"
-                          }
-                        },
-                        {
-                          "updateDimensionProperties": {
-                            "range": {
-                              "sheetId": sheetId,
-                              "dimension": "ROWS",
-                              "startIndex": int(Rowrange_1)-1,
-                              "endIndex":   int(Rowrange_2)-1
-                            },
-                            "properties": {
-                              "pixelSize": Row_pixel
-                            },
-                            "fields": "pixelSize"
-                          }
-                        }
-                      ]
-                    }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def adjust_row(self,Rowrange,Row_pixel,*sheetid):
-                sheetId=0
-                Rowrange_1,Rowrange_2=1,1
-                
-                if Rowrange and ":" in str(Rowrange):
-                    Rowrange_1,Rowrange_2=Rowrange.split(":")
-                   
-                    
-                if sheetid:
-                    sheetId=sheetid[0]
-                body={
-                      "requests": [
-                      
-                        {
-                          "updateDimensionProperties": {
-                            "range": {
-                              "sheetId": sheetId,
-                              "dimension": "ROWS",
-                              "startIndex": int(Rowrange_1)-1,
-                              "endIndex":   int(Rowrange_2)-1
-                            },
-                            "properties": {
-                              "pixelSize": Row_pixel
-                            },
-                            "fields": "pixelSize"
-                          }
-                        }
-                      ]
-                    }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def adjust_col(self,Colrange,Col_pixel,*sheetid):
-                sheetId=0
-                
-                Colrange_1,Colrange_2=1,1
-                if Colrange and ":" in str(Colrange):
-                    Colrange_1,Colrange_2=Colrange.split(':')
-                    if re.findall('[a-z]',Colrange_1,re.IGNORECASE) and  re.findall('[a-z]',Colrange_2,re.IGNORECASE) :
-                            Colrange_1=alphabet_num[re.findall('[a-z]',Colrange_1,re.IGNORECASE)[0].lower()]
-                            Colrange_2=alphabet_num[re.findall('[a-z]',Colrange_2,re.IGNORECASE)[0].lower()]
-               
-                if sheetid:
-                    sheetId=sheetid[0]
-                body={
-                      "requests": [
-                        {
-                          "updateDimensionProperties": {
-                            "range": {
-                              "sheetId": sheetId,
-                              "dimension": "COLUMNS",
-                              "startIndex": int(Colrange_1)-1,
-                              "endIndex":   int(Colrange_2)-1
-                            },
-                            "properties": {
-                              "pixelSize": Col_pixel
-                            },
-                            "fields": "pixelSize"
-                          }
-                        }
-                      ]
-                    }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def append_row(self,length,*sheetID):
-               sheetId=0
-               if sheetID:
-                      sheetId=sheetID[0] 
-               body=   {
-                  "requests": [
-                    {
-                      "appendDimension": {
-                        "sheetId": sheetId,
-                        "dimension": "ROWS",
-                        "length": length
-                      }
-                    }
-                    
-                ]}
-               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-          
-               
-        def append_col(self,length,*sheetID):
-               sheetId=0
-               if sheetID:
-                      sheetId=sheetID[0] 
-               body=  {"requests":[{
-                      "appendDimension": {
-                        "sheetId": sheetId,
-                        "dimension": "COLUMNS",
-                        "length": length}
-                      }
-                    ]}
-               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-          
+        
                   
         @property
         def id(self):
