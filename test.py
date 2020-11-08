@@ -7,13 +7,15 @@ import time
 # Before ues API , log in your drive first.
 # Login Function:
 Drive=gdapi.Drive("PICKLE PATH OR JSON PATH") # you can set another Drive2 ,etc...
-
 # json file accept : 
 #       1. credentials json of OAuth2.0
 #       2. keys json of service account
 # if you want to change Drive variable to use another Credential
 # use >> Drive.chose_json(path) or Drive.chose_pickle(path)
 
+# Troubleshoot :
+# If get "ERR_CONNECTION_REFUSED" when access 
+# try : Use Private Browsing to login
 if Drive:
 
     
@@ -184,11 +186,32 @@ if Drive:
     sheet.adjust_row(Rowrange,Row_pixel,*sheetid)
         
     # Append Column
-    sheet.append_col(length,*sheetid) #append length column
-        
-    # Append Row
-    sheet.append_row(length,*sheetid) #append length row
+    sheet.append_col(length,*sheetid,**kwargs) #append length column
+    # parameter:
+    #   sheetid = 123456  # add a sheet id to access
+    # kwargs:
+    #   sheetname= 'abc'  # choose sheetname to access
 
+
+    # Delete Column
+    start=1
+    end=6  
+    sheet.append_col((start,end),*sheetid,**kwargs) # (start,end) is a tuple data
+    # also can use alphabet to represent Column number
+    sheet.append_col('a:e',*sheetid,**kwargs)       # delete column from a to e , a will keep 
+
+    
+    # Append Row
+    sheet.append_row(length,*sheetid,**kwargs) #append length row
+    
+
+
+    # Delete Row
+    start=1# 
+    end=6  # 
+    sheet.append_row((start,end),*sheetid,**kwargs) # (start,end) is a tuple data
+
+    
     # Find and Replace
     find='string'           #   find     string
     reapcle='test'          #   replace string
@@ -230,17 +253,26 @@ if Drive:
     formula='match("'+findwhat+","+findrange+'",0)'
     sheet.formula(workrange,formula,*sheetid)
 
-     # use formula get result in different workbook
+     # Use formula get result in different workbook
     sheet.formula("workbook2!B25",'sum(workbook1!B2:B5)')  # Get result in workbook2>B25 , execute function in wrokbook1 >B2:B25
 
-    # get col index
+    # Get col index
     findname="ABC"
-    index_col=sheet.get_col(findname,*sheetID)  # return index_col number
+    index_col=sheet.get_col_index(sheetname,*sheetID,**kwargs)  # return index of column
+    # kwargs :
+    # sheetname | example : sheetname='A' , find the column name in Sheetname  A
 
-    # get row index
+    # Get row index
     findname="ABC"
-    index_row=sheet.get_col(findname,*sheetID)  # return index_row number
+    index_row=sheet.get_col(sheetname,*sheetID)  # return index_row number
 
-    # get_subsheet id
-    sheet_id=sheet.getsub_id(findname)
+    # Get worksheet id
+    sheet_id=sheet.getsub_id(sheetname)
+
+    # Get worksheet size (max column and max row)
+    sheet_max_column,sheet_max_row=sheet.get_sheet_size(sheetname)
     
+    # Find string
+    find_sting="string to find"
+    find_string(find_sting,*sheetID,**kwargs)  # return a list of cell
+        
