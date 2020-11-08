@@ -141,12 +141,25 @@ How to use Google Sheet and Google Drive API
     sheet.adjust_col(Colrange,Col_pixel,*sheetid)
    ## Only adjust row
     sheet.adjust_row(Rowrange,Row_pixel,*sheetid)
-        
+         
    ## Append Column
-    sheet.append_col(length,*sheetid) #append length column
-        
+    sheet.append_col(length,*sheetid,kwargs) #append length column
+    # parameter:
+    #   sheetid = 123456  # add a sheet id to access
+    # kwargs:
+    #   sheetname= 'abc'  # choose sheetname to access
+   ## Delete Column
+    start=1
+    end=6  
+    sheet.append_col((start,end),*sheetid,**kwargs) # (start,end) is a tuple data
+    # also can use alphabet to represent Column number
+    sheet.append_col('a:e',*sheetid,**kwargs)       # delete column from a to e , a will keep      
    ## Append Row
     sheet.append_row(length,*sheetid) #append length row 
+   ## Delete Row
+    start=1 
+    end=6   
+    sheet.append_row((start,end),*sheetid,**kwargs) # (start,end) is a tuple data
    ## Find and Replace
     find='string'           #   find     string
     reapcle='test'          #   replace string
@@ -193,11 +206,19 @@ How to use Google Sheet and Google Drive API
 
    ## Get col index
     findname="ABC"
-    index_col=sheet.get_col(findname,*sheetID)  # return index_col number
-
+    index_col=sheet.get_col_index(sheetname,*sheetID,**kwargs)  # return index of column
+    # kwargs :
+    # sheetname | example : sheetname='A' , find the column name in Sheetname  A
+    
    ## Get row index
     findname="ABC"
-    index_row=sheet.get_col(findname,*sheetID)  # return index_row number
+    index_row=sheet.get_col(sheetname,*sheetID,**kwargs)  # return index_row number
+
 
    ## Get_subsheet id
     sheet_id=sheet.getsub_id(findname)
+    
+    
+   ## Find string
+    find_sting="string to find"
+    find_string(find_sting,*sheetID,**kwargs)  # return a list of cell
