@@ -1,6 +1,7 @@
 from __future__ import print_function
 import pickle
 import os.path
+from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -74,7 +75,9 @@ class Drive:
                         elif '.pickle' in str(args):
                                 self.chose_pickle(args[0])
                         else:
-                            service,service_sheet=self.main()
+                            raise TypeError(" Only acccept json or pickle file")
+                            return 
+                            
     @property
     def Download_path(self):
         return self._download_path
@@ -87,10 +90,8 @@ class Drive:
     def chose_json(self,path):
             global service,service_sheet
             self.json_path=path
-          
             service,service_sheet=self.main()
-          
-                   
+            
             self.json_path=path
     def chose_pickle(self,path):
             global service,service_sheet
@@ -618,7 +619,7 @@ class Drive:
                 size=self.get_size(j['id'],0)
                 sizes+=int(size)
             return size_byte(sizes)
-        results = service.files().get(fileId=fileid,fields='size').execute()['size']
+        results = service.files().get(fileId=fileid,fields='*').execute()['size']
         if arg:  return results
         return size_byte(int(results))
     def get_type(self,fileid):
@@ -641,6 +642,7 @@ class Drive:
         Prints the names and ids of the first 10 files the user has access to.
         """
         creds = None
+        service_account=0
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
@@ -649,24 +651,39 @@ class Drive:
             
             with open(self.PickleFile, 'rb') as token:
                 creds = pickle.load(token)
-              
+                
+       
         # If there are no (valid) credentials available, let the user log in.
         try:
          if not creds or not creds.valid:
+            
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.json_path, SCOPES)
-                creds = flow.run_local_server(port=8012)
-            # Save the credentials for the next run
-            with open(PickleFile, 'wb') as token:
-                pickle.dump(creds, token)
-        except:
+                if os.path.exists(self.json_path):
+                 with open(self.json_path,'r') as jsooon:
+                    if 'service_account' in str(jsooon.read()):
+                        service_account=1
+                if service_account:
+                    creds = ServiceAccountCredentials.from_json_keyfile_name(
+                        self.json_path, scopes=SCOPES)
+                    
+                    
+                else:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        self.json_path, SCOPES)
+                    creds = flow.run_local_server(port=8012)
+                    # Save the credentials for the next run
+                    self.PickleFile='token.pickle'
+                    with open('token.pickle', 'wb') as token:
+                
+                        pickle.dump(creds, token)
+        except Exception as Errorlogin:
+            print(Errorlogin)
             print("▲ If you don't set the json or pickle path, plz set the path before use ")
             print("Use function: \n 1. chose_pickle (pickle_path)\n 2. chose_json   (json_path)")
             return
-        
+       
         service = build('drive', 'v3', credentials=creds)
         service_sheet = build('sheets', 'v4', credentials=creds)
              
