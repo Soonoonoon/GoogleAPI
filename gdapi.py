@@ -11,6 +11,7 @@ import re
 import datetime
 from  pprint  import pprint
 import sys
+import time
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 # If modifying these scopes, delete the file token.pickle.
 
@@ -20,28 +21,41 @@ Download_path=os.path.split(sys.argv[0])[0]
 #mimetype dict
 mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xml': 'text/xml', 'ods': 'application/vnd.oasis.opendocument.spreadsheet', 'csv': 'text/csv', 'tmpl': 'text/plain', 'pdf': 'application/pdf', 'php': 'application/x-httpd-php', 'jpg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'bmp': 'image/bmp', 'txt': 'text/plain', 'doc': 'application/msword', 'js': 'text/js', 'swf': 'application/x-shockwave-flash', 'mp3': 'audio/mpeg', 'zip': 'application/zip', 'rar': 'application/rar', 'tar': 'application/tar', 'arj': 'application/arj', 'cab': 'application/cab', 'html': 'text/html', 'htm': 'text/html', 'default': 'application/octet-stream', 'folder': 'application/vnd.google-apps.folder', '': 'application/vnd.google-apps.video', 'Google Docs': 'application/vnd.google-apps.document', '3rd party shortcut': 'application/vnd.google-apps.drive-sdk', 'Google Drawing': 'application/vnd.google-apps.drawing', 'Google Drive file': 'application/vnd.google-apps.file', 'Google Drive folder': 'application/vnd.google-apps.folder', 'Google Forms': 'application/vnd.google-apps.form', 'Google Fusion Tables': 'application/vnd.google-apps.fusiontable', 'Google Slides': 'application/vnd.google-apps.presentation', 'Google Apps Scripts': 'application/vnd.google-apps.script', 'Shortcut': 'application/vnd.google-apps.shortcut', 'Google Sites': 'application/vnd.google-apps.site', 'Google Sheets': 'application/vnd.google-apps.spreadsheet'}
 # number   <==> alphabet 
-num_alphabet = {1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
+num_alphabet = {0:'',1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
 # alphabet <==> number
 alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
 
 
 def Exapnd_dict_alphabet_number():
-   count=1
+    count=26
+    count1=1
+    count2=1
+    count3=0
 
-   start=0
-   bigcount=1
-   for j in range(27,1000):
-        count=count%27
-        if count==0:
-                start=1
-                count+=1
-                continue
-        if count==1 and  start:bigcount+=1
-        alp=num_alphabet[count]
-        combalp=num_alphabet[bigcount]+alp
-        alphabet_num[combalp]=j
-        num_alphabet[j]=combalp
+    s3=0
+    while count<1500:
+        
         count+=1
+        
+        if count1%27==0:
+            count1=1
+            count2+=1
+        count2=count2%27
+        if count2%27==0:
+
+            count2=1
+            count3+=1
+            s3=1
+        count3=count3%27
+        if count3%27==0 and s3:
+            count3=1
+        if count3:
+            alp=num_alphabet[count3]+num_alphabet[count2]+num_alphabet[count1%27]
+        else:
+            alp=num_alphabet[count2]+num_alphabet[count1]
+        num_alphabet[count]=alp
+        alphabet_num[alp]=count
+        count1+=1
 Exapnd_dict_alphabet_number()
 
 def RGB_to_HEX(R,G,B):
@@ -75,15 +89,14 @@ def format_str(namelimit,name):
         name_=name+(' '.encode('big5')*fill_name).decode('big5')
         return name_
 def size_byte(size):
-        dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
-        dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
-        size=int(size)
-        for i in range(4,0,-1):
-         
-          if size>dict_[i]:
-              return str(size//dict_[i])+'.'+str(size%dict_[i])[:2]+' '+dict_unit[i]
-          if i==1:
-              return str(size)+' Byte'
+    dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
+    dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
+    size=int(size)
+    for i in range(4,0,-1):
+      if size>dict_[i]:
+          return str(round(size/dict_[i],2))+' '+dict_unit[i]
+      if i==1:
+          return str(size)+' Byte'
 class Drive:
     PickleFile=''
     json_path=''
@@ -629,11 +642,20 @@ class Drive:
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
         results = service.files().get(fileId=fileid,fields='webViewLink').execute()['webViewLink']
         return results
+    def get_storageQuota(self):
+       storage=service.about().get(fields='*').execute()['storageQuota']
     
+       alreadyuse='Usage: '+size_byte(int(storage['usage']))
+       limit='Limit Usage: '+size_byte(int(storage['limit']))
+       trash="Trash Usage: " +size_byte(int(storage['usageInDriveTrash']))
+       
+       return alreadyuse,limit
     def get_size(self,fileid,*arg):
         dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
         dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
-        type_=self.get_type(fileid)
+        try:
+          type_=get_type(fileid)
+        except:type_=''
         if 'folder' in str(type_):
             sizes=0
             list_files=self.listdir(fileid)
@@ -743,11 +765,12 @@ class Drive:
         request = service_sheet.spreadsheets().values().append(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=writeData )
         response = request.execute()
     def get_filelist(self):
-        dict_=self.list_all_file(view=0)
+        dict_=list_all_file(view=0)
         if dict_:
+          sizeall=0
           print("Writing down...")
-          print('Download Path: ',self._download_path)
-          with open (self._download_path+'\\File_list.csv','w+',encoding='utf-8-sig')as store_csv:
+          print('Download Path: ',Download_path+'\\File_list.csv')
+          with open (Download_path+'\\File_list.csv','w+',encoding='utf-8-sig')as store_csv:
            store_csv.write('Name')
            store_csv.write(',')
            store_csv.write('ID')
@@ -768,8 +791,10 @@ class Drive:
                  name_=item['name']
                  type_=item['mimeType']
                  if 'size' not in item:
-                     size=''
+                     size=0
                  else:size=item['size']
+                 
+                 sizeall+=int(size)
                  link=item['webViewLink']
                  shared=item['shared']
                  if not shared:
@@ -778,6 +803,7 @@ class Drive:
                      shared="Shared"
                  user=item['lastModifyingUser']['emailAddress']
                  sizef=lambda s:'-' if not s else size_byte(s)
+                 
                  store_csv.write(str(name_))
                  store_csv.write(',')
                  store_csv.write(str(id_))
@@ -792,6 +818,19 @@ class Drive:
                  store_csv.write(',')
                  store_csv.write(str(user))
                  store_csv.write('\n')
+           store_csv.write(str('總計'))
+          
+           store_csv.write(',')
+           store_csv.write(str(','))
+           store_csv.write(',')
+           store_csv.write(sizef(sizeall))
+           store_csv.write(',')
+           store_csv.write(str(','))
+           store_csv.write(',')
+           store_csv.write(',')                 
+           store_csv.write(',')
+           store_csv.write(str(','))
+           store_csv.write('\n')
     def list_all_file(self,*args,**kwargs):
          view=1
          
@@ -894,42 +933,46 @@ class Drive:
                     return
 
 class Sheet:
-        formula_use_data='for_formula_use_!A1'
-        def __init__(self,*id_in,**kwargs):
+    formula_use_data='for_formula_use_!A1'
+    def __init__(self,*sheetid,**kwargs):
         
-            global id_
-            if id_in:
-               self._id=id_in[0]
-               id_=id_in[0]
-               try:
-                   self.getsheet()
-               except Exception as Err:
-                   
-                   
+        
+        
+        if sheetid:
+           self._id=sheetid[0]
+           
+           try:
+             self.getsheet()
+           except Exception as Err:
                    if 'not found' in str(Err):
                        print("Your SheetID was not found")
                    else:
                        raise TypeError("Login drive first >> drive = gdi.Drive(json or pickle path)")
-            else:
-                timenow=datetime.datetime.now().strftime("%H%M%S")
-                if kwargs:
-                        if 'folder' in kwargs:
+                   
+                   
+        else:
+            timenow=datetime.datetime.now().strftime("%H%M%S")
+            if kwargs:
+                if 'folder' in kwargs:
                                 foldername=kwargs['folder']
-                        for i in kwargs:
-                          find_name=re.findall("page|new_?page|new_?name|new_?title|n\S?ame|title|nam_?|",str(i),re.IGNORECASE)
-                          if find_name and len(find_name)<=2:
-                           
-                            new_name=kwargs[find_name[0]]                           
-                            self._id=self.create(str(new_name),folder=foldername)
-                else:
-                      self._id=self.create("NewSheet"+str(timenow),**kwargs)
-                      id_=self._id
-                      print("Can't find SheetID , automake  NewSheet"+str(timenow))
-        def ___get__index_start_end(self,Colrange):
+                for i in kwargs:
+                  find_name=re.findall("page|new_?page|new_?name|new_?title|n\S?ame|title|nam_?|",str(i),re.IGNORECASE)
+                  if find_name and len(find_name)<=2:
+                   
+                    new_name=kwargs[find_name[0]]
+                    self._id=self.create(str(new_name),folder=foldername)
+            else:
+              self._id=self.create("NewSheet"+str(timenow))
+              
+              
+              print("Can't find SheetID , automake sheetname: NewSheet"+str(timenow))
+              print("Spreadsheet ID: " ,self._id)
+    def ___get__index_start_end(self,Colrange):
                 
                 if ',' in Colrange:
                     Colrange_1,Colrange_2=Colrange.split(',')
                     if not Colrange_1.isnumeric() and not Colrange_2.isnumeric():
+                       
                         Colrange_1,Colrange_2=(self._find_columb_alphabet_to_number(Colrange))
                     elif not Colrange_1.isnumeric() and  Colrange_2.isnumeric():
                         Colrange_1,_=self._find_columb_alphabet_to_number(Colrange_1)
@@ -947,615 +990,659 @@ class Sheet:
                         Colrange_2,_=self._find_columb_alphabet_to_number(Colrange_2)
                 else:
                     if Colrange.isnumeric():
-                        Colrange_1,Colrange_2=Colrange,Colrange
+                        Colrange_1,Colrange_2=int(Colrange),int(Colrange)
                     else:
                         Colrange_1,Colrange_2=(self._find_columb_alphabet_to_number(Colrange))
                         if Colrange_2==None:
                             Colrange_2=Colrange_1
                 return Colrange_1,Colrange_2
-        def adjust_col_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetID,**kwargs):
-                    Colrange=str(Colrange)
-                    Rowrange=str(Rowrange)
+    def adjust_col_row(self,Colrange,Col_pixel,Rowrange,Row_pixel,*sheetID,**kwargs):
+               
+                Colrange=str(Colrange)
+                Rowrange=str(Rowrange)
+                
+                sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                
+                if sheetId==None:return "Not found this sheet name"
+                sheetname=self.__arg_return_sheetname(sheetId)
+                
+                Rowrange_1,Rowrange_2=1,1
+                Colrange_1,Colrange_2=1,1
+                if 'all' in Colrange:
+                    col,row=self.get_sheet_size(sheetname=sheetname)
+                    Colrange_1=1
+                    Colrange_2=col
                     
-                    sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                    if sheetId==None:return "Not found this sheet name"
-                    Rowrange_1,Rowrange_2=1,1
-                    Colrange_1,Colrange_2=1,1
+                else:
                     Colrange_1,Colrange_2=self.___get__index_start_end(Colrange)
-                                
-                    if Rowrange and ":" in str(Rowrange):
-                        Rowrange_1,Rowrange_2=Rowrange.split(":")
-                        if not Rowrange_1:
-                            Rowrange_1=0
-                    elif  Rowrange and "," in str(Rowrange):
-                        Rowrange_1,Rowrange_2=Rowrange.split(":")
-                        if not Rowrange_1:
-                            Rowrange_1=0
-                    else:
-                        Rowrange_1,Rowrange_2=Rowrange,Rowrange
-                        
-                    if not (Rowrange_1) : Rowrange_1=1
-                    if not (Colrange_1) : Colrange_1=1
-                    body={
-                          "requests": [
-                            {
-                              "updateDimensionProperties": {
-                                "range": {
-                                  "sheetId": sheetId,
-                                  "dimension": "COLUMNS",
-                                  "startIndex": int(Colrange_1)-1,
-                                  "endIndex":   int(Colrange_2)
-                                },
-                                "properties": {
-                                  "pixelSize": Col_pixel
-                                },
-                                "fields": "pixelSize"
-                              }
+                  
+                if 'all' in Rowrange:
+                    col,row=self.get_sheet_size(sheetname=sheetname)
+                    Rowrange_1=1
+                    Rowrange_2=row
+                  
+                elif Rowrange and ":" in str(Rowrange):
+                    Rowrange_1,Rowrange_2=Rowrange.split(":")
+                    if not Rowrange_1:
+                        Rowrange_1=0
+                elif  Rowrange and "," in str(Rowrange):
+                    Rowrange_1,Rowrange_2=Rowrange.split(":")
+                    if not Rowrange_1:
+                        Rowrange_1=0
+                else:
+                    Rowrange_1,Rowrange_2=int(Rowrange),int(Rowrange)
+                
+               
+                checknum=lambda x : 1 if int(x)<1 else int(x)
+                Colrange_1=checknum(Colrange_1)
+                Colrange_2=checknum(Colrange_2)
+                Rowrange_1=checknum(Rowrange_1)
+                Rowrange_2=checknum(Rowrange_2)
+                body={
+                      "requests": [
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "COLUMNS",
+                              "startIndex": int(Colrange_1)-1,
+                              "endIndex":   int(Colrange_2)
                             },
-                            {
-                              "updateDimensionProperties": {
-                                "range": {
-                                  "sheetId": sheetId,
-                                  "dimension": "ROWS",
-                                  "startIndex": int(Rowrange_1)-1,
-                                  "endIndex":   int(Rowrange_2)
-                                },
-                                "properties": {
-                                  "pixelSize": Row_pixel
-                                },
-                                "fields": "pixelSize"
-                              }
-                            }
-                          ]
-                        }
-                    request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def adjust_row(self,Rowrange,Row_pixel,*sheetID,**kwargs):
-           
-                    Rowrange=str(Rowrange)
-                    sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                    if sheetId==None:return "Not found this sheet name"
-                    Rowrange_1,Rowrange_2=1,1
-                    
-                    if Rowrange and ":" in str(Rowrange):
-                        Rowrange_1,Rowrange_2=Rowrange.split(":")
-                        if not Rowrange_1:
-                            Rowrange_1=0
-                    elif  Rowrange and "," in str(Rowrange):
-                        Rowrange_1,Rowrange_2=Rowrange.split(",")
-                        if not Rowrange_1:
-                            Rowrange_1=0
-                    else:
-                        Rowrange_1,Rowrange_2=Rowrange,Rowrange
-                        
-                    
-                    if not (Rowrange_1): Rowrange_1=1
-                    body={
-                          "requests": [
-                          
-                            {
-                              "updateDimensionProperties": {
-                                "range": {
-                                  "sheetId": sheetId,
-                                  "dimension": "ROWS",
-                                  "startIndex": int(Rowrange_1)-1,
-                                  "endIndex":   int(Rowrange_2)
-                                },
-                                "properties": {
-                                  "pixelSize": Row_pixel
-                                },
-                                "fields": "pixelSize"
-                              }
-                            }
-                          ]
-                        }
-                    request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-                    
-        def adjust_col(self,Colrange,Col_pixel,*sheetID,**kwargs):
-                    Colrange=str(Colrange)
-                    
-                    sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                    if sheetId==None:return "Not found this sheet name"
-                    
-                    Colrange_1,Colrange_2=1,1
-                    Colrange_1,Colrange_2=self.___get__index_start_end(Colrange)
-                    
-                    if not (Colrange_1) : Colrange_1=1
-                   
-                    body={
-                          "requests": [
-                            {
-                              "updateDimensionProperties": {
-                                "range": {
-                                  "sheetId": sheetId,
-                                  "dimension": "COLUMNS",
-                                  "startIndex": int(Colrange_1)-1,
-                                  "endIndex":   int(Colrange_2)
-                                },
-                                "properties": {
-                                  "pixelSize": Col_pixel
-                                },
-                                "fields": "pixelSize"
-                              }
-                            }
-                          ]
-                        }
-                    request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        
-        def delete_row(self,range_,*sheetID,**kwargs):
-                   start,end=range_
-                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                   if sheetId==None:return "Not found this sheet name"
-                   
-                   body=   {
-                      "requests": [
-                        {
-                          "deleteDimension": {
-                            "range":{
-                                 "sheetId": sheetId,
-                                  "dimension": "ROWS",
-                                  "startIndex": int(start)-1,
-                                  "endIndex": end
-
-
-                                }}}]}
-                           
-                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-              
-        def append_row(self,length,*sheetID,**kwargs):
-                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                   if sheetId==None:return "Not found this sheet name"
-                   
-                   body=   {
-                      "requests": [
-                        {
-                          "appendDimension": {
-                            "sheetId": sheetId,
-                            "dimension": "ROWS",
-                            "length": length
+                            "properties": {
+                              "pixelSize": Col_pixel
+                            },
+                            "fields": "pixelSize"
                           }
-                        }
-                        
-                    ]}
-                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def _find_columb_alphabet_to_number(self,text):
-                text=str(text)
-                if ':' in text or ',' in text:
-                     if '!' in text:
-                        text=text[text.find('!')+1:]
-                     if ':' in text:   
-                         _A_,_B_=text.split(':')
-                     elif ',' in text:   
-                         _A_,_B_=text.split(',')
-                     find_alphaber1= re.findall('[a-z]{1,3}',_A_,re.IGNORECASE)
-                     find_alphaber2= re.findall('[a-z]{1,3}',_B_,re.IGNORECASE)
-                    
-                     if find_alphaber1 and find_alphaber2:
-                         return alphabet_num[find_alphaber1[0].lower()],alphabet_num[find_alphaber2[0].lower()]
-                     elif not find_alphaber1 and find_alphaber2:
-                         return 0,alphabet_num[find_alphaber2[0].lower()]
-                     elif find_alphaber1 and not find_alphaber2:
-                         return alphabet_num[find_alphaber1[0].lower()],0
-                     else:
-                         
-                         return _A_,_B_
-                     
-                find_alphaber= re.findall('[a-z]{1,3}',text,re.IGNORECASE)
-                if find_alphaber:
-                    return alphabet_num[find_alphaber[0].lower()],None
-                return text,None
-        def delete_col(self,range_,*sheetID,**kwargs):
-                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                   if sheetId==None:return "Not found this sheet name"
-                   if re.findall('[a-z]',str(range_),re.IGNORECASE):
-                       start,end=self._find_columb_alphabet_to_number(range_)
-                       if end==None:
-                          end= start 
-                   else:
-                       start,end=range_
-                   
-                   body=   {
-                      "requests": [
-                        {
-                          "deleteDimension": {
-                            "range":{
-                                 "sheetId": sheetId,
-                                  "dimension": "COLUMNS",
-                                  "startIndex": int(start)-1,
-                                  "endIndex": int(end)
-                                }}}]}
-                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()           
-        def append_col(self,length,*sheetID,**kwargs):
-                   sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
-                   if sheetId==None:return "Not found this sheet name"
-                   
-                   body=  {"requests":[{
-                          "appendDimension": {
-                            "sheetId": sheetId,
-                            "dimension": "COLUMNS",
-                            "length": length}
-                          }
-                        ]}
-                   request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def __arg_return_sheetname(self,*sheetID,**kwargs):
-            sheetId=0
-            sheet_name=''
-            if sheetID:
-                  sheetId=sheetID[0]
-            if kwargs:
-                if 'sheetname' in kwargs:
-                    sheet_name=kwargs['sheetname']
-                    for i in self.sub:
-                
-                        sheet_id_,name_=self.sub[i]
-                        if sheet_name == name_:
-                            
-                            return name_
-                    return None
-            if not sheet_name:
-              for i in self.sub:
-                
-                sheet_id_,name_=self.sub[i]
-                if sheetId == sheet_id_:
-                    
-                    return name_
-                    
-            return None
-        def __arg_return_sheetid(self,*sheetID,**kwargs):
-            sheetId=0
-            sheet_name=''
-            if sheetID:
-                  sheetId=sheetID[0]
-            if kwargs:
-                
-                if 'sheetname' in kwargs:
-                    sheet_name=kwargs['sheetname']
-             
-                    for i in self.sub:
-                
-                        sheet_id_,name_=self.sub[i]
-                        if sheet_name == name_:
-                           
-                            return sheet_id_
-                        
-                    return None
-                    
-            return sheetId
-        
-        def sort_col(self,name,*Updown,**col):
-                
-                
-                sheetId=0
-                updown=1
-                if col:
-                    if 'col' in col:
-                        chose_col=int(col['col'])-1
-                        if chose_col<0:
-                            chose_col=0
-                chose_col_=str(self.get_col(name))
-                
-                if  chose_col_ and re.findall('\d+',chose_col_,re.IGNORECASE):
-                    chose_col=int(chose_col_)-1
-                else:
-                    if chose_col:pass
-                    else:return
-                if Updown:
-                    if Updown[0]==1:updown=1
-                    else:updown=0
-                if updown:
-                    updown='ASCENDING'
-                else:
-                    updown='DESCENDING'
-                
-                body=        {
-                  "requests": [
-                    {
-                      "sortRange": {
-                        "range": {
-                          "sheetId": sheetId,
-                          "startRowIndex": 1,
-                          "endRowIndex": 50,
-                          "startColumnIndex": 0,
-                          "endColumnIndex": 50
                         },
-                        "sortSpecs": [
-                          {
-                            "dimensionIndex": int(chose_col),
-                            "sortOrder": updown
-                          }]  }
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "ROWS",
+                              "startIndex": int(Rowrange_1)-1,
+                              "endIndex":   int(Rowrange_2)
+                            },
+                            "properties": {
+                              "pixelSize": Row_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
                         }
                       ]
                     }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        
-        def get_sheet_size(self,sheetname): # check specific worksheet Max column and Max row
-            response=service_sheet.spreadsheets().values().get(spreadsheetId=self.id, range=sheetname ).execute()['range']
-            
-            index1=response.find('!')
-            range1,range2=response[index1+1:].split(':')
-            max_row=re.findall('\d+',str(range2),re.IGNORECASE)[0]
-            max_column=alphabet_num[re.findall('[a-z]{1,3}',str(range2),re.IGNORECASE)[0].lower()]
-            return max_column,max_row
-        def find_string(self,find_sting,*sheetID,**kwargs):
-            find_list=[]
-            sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
-            if not sheet_name:return "Not Found"
-            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
-            
-            for i in range(0,len(response)):
-                for j in range (0,len(response[i])):
-                   
-                   if find_sting == str(response[i][j].translate(non_bmp_map)):
-                      find_list.append((j+1,i+1))
-                      # return (column,row)
-                    
-               
-            return find_list
-        def get_col_index(self,colname,*sheetID,**kwargs):
-            sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
-            if not sheet_name:return "Not Found"
-            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=sheet_name ).execute()
-            for i in response['valueRanges']:
-                for j in range(0,len(i['values'][0])):
-                   
-                        if colname == str(i['values'][0][j].translate(non_bmp_map)):
-                                     return j+1
-            return "Not Found"
-                            
-        
-        def get_row_index(self,rowname,*sheetID,**kwargs): # return first find row index        
-            sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
-            if not sheet_name:return "Not Found"
-            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
-            
-            for i in range(0,len(response)):
-                for j in range (0,len(response[i])):
-                   if rowname == str(response[i][j].translate(non_bmp_map)):
-                       return i+1
-               
-            return "Not Found"
-        def __formula__get_col_index(self,colname,*sheetID):
-            sheetId=0
-            if sheetID:
-                  sheetId=sheetID[0]
-            name_chose=''
-            for j in self.sub:
-                sheet_id_,name_=self.sub[j]
-                if sheetId == sheet_id_:
-                    name_chose=name_+'!'
-                    break
-            formula='match("'+colname+'",'+str(name_chose)+'a1:in1,0)'
-         
-           
-            self.formula(self.formula_use_data,formula)
-            
-            
-            if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
-              colnum=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
-              return colnum
-            else:
-              print('◭ Error: '+str(colname)+" Was Not Found")
-              return None
-          
-            return int(colnum)
-        def __formula__get_col(self,findname,*sheetID):
-            sheetId=0
-            if sheetID:sheetId=sheetID[0]
-            name_chose=''
-            for j in self.sub:
-                sheet_id_,name_=self.sub[j]
-                if sheetId == sheet_id_:
-                    name_chose=name_+'!'
-                    break
-                
-                
-
-            formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,column('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
-            self.formula(self.formula_use_data,formula)
-            if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
-              col=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
-              return col
-            else:
-              print('◭ Error: '+str(findname)+" Was Not Found")
-              return None
-        def __formula__get_row(self,findname,*sheetID):
-            sheetId=0
-            if sheetID:sheetId=sheetID[0]
-            name_chose=''
-            for j in self.sub:
-                sheet_id_,name_=self.sub[j]
-                if sheetId == sheet_id_:
-                    name_chose=name_+'!'
-                    break
-                
-                
-
-            formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,ROW('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
-            self.formula(self.formula_use_data,formula)
-            if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
-              row=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
-              return row
-            else:
-              print('◭ Error: '+str(findname)+" Was Not Found")
-              return None
-        def formula(self,cell,formula,*sheetID):
-                  sheetId=0
-                 
-                  if '!' in str(cell):
-                    titlename,_____=cell.split('!')
-                    if 'for_formula_use_' not in str(self.sub):
-                        self.add_sheet("for_formula_use_")
-                   
-                   
-                    for j in self.sub:
-                      sheetidd,name_sheet=self.sub[j]
-                      if str(name_sheet)==str(titlename):
-                          sheetId=sheetidd
-                          break
-                  
-                  
-                  if not re.findall('=',str(formula),re.IGNORECASE):
-                      formula='='+formula
-                  if re.findall("'",str(formula),re.IGNORECASE):
-                      formula=formula.replace("'",'"')
-                  if sheetID:
-                      sheetId=sheetID[0]
-                   
-                  
-                  if ':' in cell: #A1:B1
-                      if '!'in str(cell):__,cell=cell.split('!')
-                      input1,input2=cell.split(':')
-                      find_alp1= re.findall("[a-z]{1,2}",input1,re.IGNORECASE)
-                      find_alp2= re.findall("[a-z]{1,2}",input2,re.IGNORECASE)
-                      if find_alp1 and find_alp2:
-                          col=alphabet_num[find_alp1[0].lower()]
-                          colend=alphabet_num[find_alp2[0].lower()]
-                          row=re.findall("\d+",input1,re.IGNORECASE)[0]
-                          rowend=re.findall("\d+",input2,re.IGNORECASE)[0]
-                      else:
-                          if '!'in str(cell):__,cell=cell.split('!')
-                              
-                          col=input1
-                          row=input2
-                          colend=int(col)+1
-                          rowend=int(row)+1
-                          
-                  else:# A5
-                      if '!'in str(cell):__,cell=cell.split('!')
-                      find_alp= re.findall("[a-z]{1,2}",cell,re.IGNORECASE)
-                      if find_alp:
-                          col=alphabet_num[find_alp[0].lower()]
-                          colend=int(col)+1
-                          row=re.findall("\d+",cell,re.IGNORECASE)[0]
-                          
-                          rowend=int(row)+1
-                 # formula="=MATCH(\""+findvalue+"\",'A1:IN1',0)"
-                  
-                  body=      {
-                          "requests": [
-                            {
-                              "repeatCell": {
-                                "range": {
-                                  "sheetId": sheetId,
-                                 
-                                  "startColumnIndex": int(col)-1,
-                                  "endColumnIndex": int(colend)-1,
-                                  "startRowIndex": int(row)-1,
-                                  "endRowIndex":int(rowend)-1
-                                },
-                                "cell": {
-                                  "userEnteredValue": {
-                                      "formulaValue": formula
-                                  }
-                                },
-                                "fields": "userEnteredValue"
-                              }
-                            }
-                          ]
-                        }
-                  request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-                  
-        def getsub_id(self,find):
-                              
-                              for j in self.sub:
-                                 sheet_id_,name_= self.sub[j]
-                                 if find==name_:
-                                     return sheet_id_
-                              return ''
-        def FNR(self,find_str,replace_str,*sheetID,**kwargs):
-                #  if set FNR_allsheet , sheetId must be None
-                  sheetId=0
-                  sheetId=self.__arg_return_sheetid(*sheetID,**kwargs)
-                  FNR_allsheet=0
-                  
-                  if kwargs:
-                     
-                      if 'id' in kwargs:
-                          sheetId=kwargs['id']
-                          if not sheetId.isdecimal():
-                              print("Sheet ID must be positive number")
-
-                              return
-                          else:
-                              if int(sheetId)<0:
-                                  print("Sheet ID must be positive number")
-                      
-                        
-                      if 'allsheet'in kwargs:
-                          FNR_allsheet=1
-                      if 'name' in kwargs:
-                          sheet_name=kwargs['name']
-                          sheet_id=self.getsub_id(sheet_name)
-                          if sheet_id:
-                              sheetId=sheet_id
-                          
-                  if not sheetId :
-                   if FNR_allsheet:
-                       FNR_allsheet=True
-                   else:
-                       FNR_allsheet=False
-                  
-                  if FNR_allsheet:    
-                          body=      {"requests":[{'findReplace':{
-                          "find": find_str,
-                          "replacement": replace_str,
-                          "matchCase": True ,
-                          "matchEntireCell": True ,
-                          "searchByRegex": True ,
-                          "includeFormulas": True ,
-                          "allSheets": True
-                          }}]
-
-                   
-                      }
-                  else:
-                          body=      {"requests":[{'findReplace':{
-                          "find": find_str,
-                          "replacement": replace_str,
-                          "matchCase": True ,
-                          "matchEntireCell": True ,
-                          "searchByRegex": True ,
-                          "includeFormulas": True ,
-                          "sheetId": sheetId
-                          }}]
-
-                       
-                          }
-                          
-                  request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        def reset_color(self,set_range,**kwargs):
-                self.setcolor(set_range,(255,255,255),'',**kwargs)
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+    def adjust_row(self,Rowrange,Row_pixel,*sheetID,**kwargs):
        
-        def setcolor(self,set_range,RGB,*args,**kwargs):# if want to use HEXcolor RGB set 0
-
-            sheetId=0 # ID default  workbook1
-            alpha=1   # Transparent default 1
-            
-            find_alphabet=re.findall('[a-z]',set_range,re.IGNORECASE)
-            if find_alphabet:
-                alphabet=find_alphabet[0].lower()
-                if alphabet in alphabet_num:
-                     col_number=alphabet_num[alphabet]
-                     row_number=re.findall('\d+',set_range,re.IGNORECASE)[0]
-            elif ':' in str(set_range):
-                row_number,col_number=set_range.split(':')
-            
-            if kwargs:
-                find_alpha=re.findall('alpha|transparent',str(kwargs),re.IGNORECASE)
-                if find_alpha and len(find_alpha)<2:
-                    
-                    alpha=int(kwargs[find_alpha[0]])
-                find_id=re.findall('sheetid|id',str(kwargs),re.IGNORECASE)
-                if find_id and len(find_id)<2:
+                Rowrange=str(Rowrange)
+                sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                if sheetId==None:return "Not found this sheet name"
+                
+                sheetname=self.__arg_return_sheetname(sheetId)
+                if 'all' in Rowrange:
+                    col,row=self.get_sheet_size(sheetname=sheetname)
+                    Rowrange_1=1
+                    Rowrange_2=row
                   
-                    sheetId=int(kwargs[find_id[0]])
+                elif Rowrange and ":" in str(Rowrange):
+                    Rowrange_1,Rowrange_2=Rowrange.split(":")
+                    if not Rowrange_1:
+                        Rowrange_1=0
+                elif  Rowrange and "," in str(Rowrange):
+                    Rowrange_1,Rowrange_2=Rowrange.split(":")
+                    if not Rowrange_1:
+                        Rowrange_1=0
+                else:
+                    Rowrange_1,Rowrange_2=int(Rowrange),int(Rowrange)
+                
+               
+                checknum=lambda x : 1 if int(x)<1 else int(x)
+                
+                Rowrange_1=checknum(Rowrange_1)
+                Rowrange_2=checknum(Rowrange_2)
                     
-            if 'tuple'  in str(type(RGB)):
-                R,G,B=RGB
-            if args :
-                if '#' in str(args[0]) and 'tuple' not in str(type(RGB)): 
-                    R,G,B=HEX_to_RGB(args[0])
+                
+                if not (Rowrange_1): Rowrange_1=1
+                body={
+                      "requests": [
+                      
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "ROWS",
+                              "startIndex": int(Rowrange_1)-1,
+                              "endIndex":   int(Rowrange_2)
+                            },
+                            "properties": {
+                              "pixelSize": Row_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
+                        }
+                      ]
+                    }
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+                
+    def adjust_col(self,Colrange,Col_pixel,*sheetID,**kwargs):
+                Colrange=str(Colrange)
+                
+                sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+                if sheetId==None:return "Not found this sheet name"
+                sheetname=self.__arg_return_sheetname(sheetId)
+                Colrange_1,Colrange_2=1,1
+                if 'all' in Colrange:
+                    
+                    col,row=self.get_sheet_size(sheetname=sheetname)
+                    Colrange_1=1
+                    Colrange_2=col
+                    
+                else:
+                    Colrange_1,Colrange_2=self.___get__index_start_end(Colrange)
+                  
+
+                checknum=lambda x : 1 if int(x)<1 else int(x)
+                Colrange_1=checknum(Colrange_1)
+                Colrange_2=checknum(Colrange_2)
+               
+                body={
+                      "requests": [
+                        {
+                          "updateDimensionProperties": {
+                            "range": {
+                              "sheetId": sheetId,
+                              "dimension": "COLUMNS",
+                              "startIndex": int(Colrange_1)-1,
+                              "endIndex":   int(Colrange_2)
+                            },
+                            "properties": {
+                              "pixelSize": Col_pixel
+                            },
+                            "fields": "pixelSize"
+                          }
+                        }
+                      ]
+                    }
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+    
+    def delete_row(self,range_,*sheetID,**kwargs):
+               start,end=range_
+               sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+               if sheetId==None:return "Not found this sheet name"
+               if start<1:start=1
+               body=   {
+                  "requests": [
+                    {
+                      "deleteDimension": {
+                        "range":{
+                             "sheetId": sheetId,
+                              "dimension": "ROWS",
+                              "startIndex": int(start)-1,
+                              "endIndex": end
+
+
+                            }}}]}
+                       
+               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+          
+    def append_row(self,length,*sheetID,**kwargs):
+               sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+               if sheetId==None:return "Not found this sheet name"
+               
+               body=   {
+                  "requests": [
+                    {
+                      "appendDimension": {
+                        "sheetId": sheetId,
+                        "dimension": "ROWS",
+                        "length": length
+                      }
+                    }
+                    
+                ]}
+               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+    def _find_columb_alphabet_to_number(self,text):
+            text=str(text)
+            if ':' in text or ',' in text:
+                 if '!' in text:
+                    text=text[text.find('!')+1:]
+                 if ':' in text:   
+                     _A_,_B_=text.split(':')
+                 elif ',' in text:   
+                     _A_,_B_=text.split(',')
+                 find_alphaber1= re.findall('[a-z]{1,3}',_A_,re.IGNORECASE)
+                 find_alphaber2= re.findall('[a-z]{1,3}',_B_,re.IGNORECASE)
+                
+                 if find_alphaber1 and find_alphaber2:
+                     return alphabet_num[find_alphaber1[0].lower()],alphabet_num[find_alphaber2[0].lower()]
+                 elif not find_alphaber1 and find_alphaber2:
+                     return 0,alphabet_num[find_alphaber2[0].lower()]
+                 elif find_alphaber1 and not find_alphaber2:
+                     return alphabet_num[find_alphaber1[0].lower()],0
+                 else:
+                     
+                     return _A_,_B_
+                 
+            find_alphaber= re.findall('[a-z]{1,3}',text,re.IGNORECASE)
+            if find_alphaber:
+                return alphabet_num[find_alphaber[0].lower()],None
+            return text,None
+    def delete_col(self,range_,*sheetID,**kwargs):
+               sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+               if sheetId==None:return "Not found this sheet name"
+               if re.findall('[a-z]',str(range_),re.IGNORECASE):
+                   start,end=self._find_columb_alphabet_to_number(range_)
+                   if end==None:
+                      end= start 
+               else:
+                   start,end=range_
+               if start<1:start=1
+               body=   {
+                  "requests": [
+                    {
+                      "deleteDimension": {
+                        "range":{
+                             "sheetId": sheetId,
+                              "dimension": "COLUMNS",
+                              "startIndex": int(start)-1,
+                              "endIndex": int(end)
+                            }}}]}
+               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()           
+    def append_col(self,length,*sheetID,**kwargs):
+               sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
+               if sheetId==None:return "Not found this sheet name"
+               
+               body=  {"requests":[{
+                      "appendDimension": {
+                        "sheetId": sheetId,
+                        "dimension": "COLUMNS",
+                        "length": length}
+                      }
+                    ]}
+               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+    def __arg_return_sheetname(self,*sheetID,**kwargs):
+        sheetId=0
+        sheet_name=''
+        if sheetID:
+              sheetId=sheetID[0]
+        if kwargs:
+            if 'sheetname' in kwargs:
+                sheet_name=kwargs['sheetname']
+                for i in self.sub:
             
-            body={"requests":[{
+                    sheet_id_,name_=self.sub[i]
+                    if sheet_name == name_:
+                        
+                        return name_
+                return None
+        if not sheet_name:
+          for i in self.sub:
+            
+            sheet_id_,name_=self.sub[i]
+            if sheetId == sheet_id_:
+                
+                return name_
+                
+        return None
+    def __arg_return_sheetid(self,*sheetID,**kwargs):
+        sheetId=0
+        sheet_name=''
+        if sheetID:
+              sheetId=sheetID[0]
+        if kwargs:
+            for j in kwargs:
+                
+                findid=re.findall('sheetid|id',str(j),re.IGNORECASE)
+                if findid:
+                    return int(kwargs[j])
+            if 'sheetname' in kwargs:
+                sheet_name=kwargs['sheetname']
+         
+                for i in self.sub:
+            
+                    sheet_id_,name_=self.sub[i]
+                    if sheet_name == name_:
+                        
+                        return sheet_id_
+                return None
+                
+        return sheetId
+    
+    def sort_col(self,name,*Updown,**col):
+            
+            
+            sheetId=0
+            updown=1
+            if col:
+                if 'col' in col:
+                    chose_col=int(col['col'])-1
+                    if chose_col<0:
+                        chose_col=0
+            chose_col_=str(self.get_col(name))
+            
+            if  chose_col_ and re.findall('\d+',chose_col_,re.IGNORECASE):
+                chose_col=int(chose_col_)-1
+            else:
+                if chose_col:pass
+                else:return
+            if Updown:
+                if Updown[0]==1:updown=1
+                else:updown=0
+            if updown:
+                updown='ASCENDING'
+            else:
+                updown='DESCENDING'
+            
+            body=        {
+              "requests": [
+                {
+                  "sortRange": {
+                    "range": {
+                      "sheetId": sheetId,
+                      "startRowIndex": 1,
+                      "endRowIndex": 50,
+                      "startColumnIndex": 0,
+                      "endColumnIndex": 50
+                    },
+                    "sortSpecs": [
+                      {
+                        "dimensionIndex": int(chose_col),
+                        "sortOrder": updown
+                      }]  }
+                    }
+                  ]
+                }
+            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+    
+    def get_sheet_size(self,*sheetID,**kwargs): # check specific worksheet Max column and Max row
+        sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+        response=service_sheet.spreadsheets().values().get(spreadsheetId=self._id, range=sheet_name).execute()['range']
+        
+        index1=response.find('!')
+        range1,range2=response[index1+1:].split(':')
+       
+        max_row=re.findall('\d+',str(range2),re.IGNORECASE)[0]
+        max_column=alphabet_num[re.findall('[a-z]{1,3}',str(range2),re.IGNORECASE)[0].lower()]
+        return max_column,max_row
+    def find_string(self,find_sting,*sheetID,**kwargs):
+        find_list=[]
+        sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+        if not sheet_name:return "Not Found"
+        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
+        
+        for i in range(0,len(response)):
+            for j in range (0,len(response[i])):
+               
+               if find_sting == str(response[i][j].translate(non_bmp_map)):
+                  find_list.append((j+1,i+1))
+                  
+           
+        return find_list
+    def get_col_index(self,colname,*sheetID,**kwargs):
+        sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+        if not sheet_name:return "Not Found "
+        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()
+        for i in response['valueRanges']:
+            for j in range(0,len(i['values'][0])):
+               
+                    if colname == str(i['values'][0][j].translate(non_bmp_map)):
+                                 return j+1
+        return "Not Found"
+                        
+    
+    def get_row_index(self,rowname,*sheetID,**kwargs): # return first find row index        
+        sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
+        if not sheet_name:return "Not Found"
+        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
+        
+        for i in range(0,len(response)):
+            for j in range (0,len(response[i])):
+               if rowname == str(response[i][j].translate(non_bmp_map)):
+                   return i+1
+           
+        return "Not Found"
+    def __formula__get_col_index(self,colname,*sheetID):
+        sheetId=0
+        if sheetID:
+              sheetId=sheetID[0]
+        name_chose=''
+        for j in self.sub:
+            sheet_id_,name_=self.sub[j]
+            if sheetId == sheet_id_:
+                name_chose=name_+'!'
+                break
+        formula='match("'+colname+'",'+str(name_chose)+'a1:in1,0)'
+     
+       
+        self.formula(self.formula_use_data,formula)
+        
+        
+        if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+          colnum=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+          return colnum
+        else:
+          print('◭ Error: '+str(colname)+" Was Not Found")
+          return None
+      
+        return int(colnum)
+    def __formula__get_col(self,findname,*sheetID):
+        sheetId=0
+        if sheetID:sheetId=sheetID[0]
+        name_chose=''
+        for j in self.sub:
+            sheet_id_,name_=self.sub[j]
+            if sheetId == sheet_id_:
+                name_chose=name_+'!'
+                break
+            
+            
+
+        formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,column('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
+        self.formula(self.formula_use_data,formula)
+        if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+          col=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+          return col
+        else:
+          print('◭ Error: '+str(findname)+" Was Not Found")
+          return None
+    def __formula__get_row(self,findname,*sheetID):
+        sheetId=0
+        if sheetID:sheetId=sheetID[0]
+        name_chose=''
+        for j in self.sub:
+            sheet_id_,name_=self.sub[j]
+            if sheetId == sheet_id_:
+                name_chose=name_+'!'
+                break
+            
+            
+
+        formula='=ArrayFormula(IFERROR(ADDRESS(SMALL(IF(IFERROR(FIND("'+findname+'",'+str(name_chose)+'A1:Z1000),0)>0,ROW('+str(name_chose)+'A1:Z1000),""),ROW('+str(name_chose)+'1:1)),1,4),""))'
+        self.formula(self.formula_use_data,formula)
+        if re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE):
+          row=int(re.findall('\d+',self.read(self.formula_use_data),re.IGNORECASE)[0])
+          return row
+        else:
+          print('◭ Error: '+str(findname)+" Was Not Found")
+          return None
+    
+    
+    def formula(self,cell,formula,*sheetID):
+          sheetId=0
+         
+          if '!' in str(cell):
+            titlename,_____=cell.split('!')
+            if 'for_formula_use_' not in str(self.sub):
+                self.add_sheet("for_formula_use_")
+           
+           
+            for j in self.sub:
+              sheetidd,name_sheet=self.sub[j]
+              if str(name_sheet)==str(titlename):
+                  sheetId=sheetidd
+                  break
+          
+          
+          if not re.findall('=',str(formula),re.IGNORECASE):
+              formula='='+formula
+          if re.findall("'",str(formula),re.IGNORECASE):
+              formula=formula.replace("'",'"')
+          if sheetID:
+              sheetId=sheetID[0]
+           
+          
+          if ':' in cell: #A1:B1
+              if '!'in str(cell):__,cell=cell.split('!')
+              input1,input2=cell.split(':')
+              find_alp1= re.findall("[a-z]{1,2}",input1,re.IGNORECASE)
+              find_alp2= re.findall("[a-z]{1,2}",input2,re.IGNORECASE)
+              if find_alp1 and find_alp2:
+                  col=alphabet_num[find_alp1[0].lower()]
+                  colend=alphabet_num[find_alp2[0].lower()]
+                  row=re.findall("\d+",input1,re.IGNORECASE)[0]
+                  rowend=re.findall("\d+",input2,re.IGNORECASE)[0]
+              else:
+                  if '!'in str(cell):__,cell=cell.split('!')
+                      
+                  col=input1
+                  row=input2
+                  colend=int(col)+1
+                  rowend=int(row)+1
+                  
+          else:# A5
+              if '!'in str(cell):__,cell=cell.split('!')
+              find_alp= re.findall("[a-z]{1,3}",cell,re.IGNORECASE)
+              if find_alp:
+                  col=alphabet_num[find_alp[0].lower()]
+                  colend=int(col)+1
+                  row=re.findall("\d+",cell,re.IGNORECASE)[0]
+                  
+                  rowend=int(row)+1
+         # formula="=MATCH(\""+findvalue+"\",'A1:IN1',0)"
+          
+          body=      {
+                  "requests": [
+                    {
+                      "repeatCell": {
+                        "range": {
+                          "sheetId": sheetId,
+                         
+                          "startColumnIndex": int(col)-1,
+                          "endColumnIndex": int(colend)-1,
+                          "startRowIndex": int(row)-1,
+                          "endRowIndex":int(rowend)-1
+                        },
+                        "cell": {
+                          "userEnteredValue": {
+                              "formulaValue": formula
+                          }
+                        },
+                        "fields": "userEnteredValue"
+                      }
+                    }
+                  ]
+                }
+          request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+          
+    def getsub_id(self,find):
+                      
+                      for j in self.sub:
+                         sheet_id_,name_= self.sub[j]
+                         if find==name_:
+                             return sheet_id_
+                      return ''
+    def FNR(self,find_str,replace_str,*sheetID,**kwargs):
+        #  if set FNR_allsheet , sheetId must be None
+          sheetId=0
+          sheetId=self.__arg_return_sheetid(*sheetID,**kwargs)
+          FNR_allsheet=0
+          
+          if kwargs:
+             
+              if 'id' in kwargs:
+                  sheetId=kwargs['id']
+                  if not sheetId.isdecimal():
+                      print("Sheet ID must be positive number")
+
+                      return
+                  else:
+                      if int(sheetId)<0:
+                          print("Sheet ID must be positive number")
+              
+                
+              if 'allsheet'in kwargs:
+                  FNR_allsheet=1
+              if 'name' in kwargs:
+                  sheet_name=kwargs['name']
+                  sheet_id=self.getsub_id(sheet_name)
+                  if sheet_id:
+                      sheetId=sheet_id
+                  
+                         
+          if FNR_allsheet:
+              FNR_allsheet=True
+          else:
+              FNR_allsheet=False
+          
+          if FNR_allsheet:    
+                  body=      {"requests":[{'findReplace':{
+                  "find": find_str,
+                  "replacement": replace_str,
+                  "matchCase": True ,
+                  "matchEntireCell": True ,
+                  "searchByRegex": True ,
+                  "includeFormulas": True ,
+                  "allSheets": True
+                  }}]
+
+           
+              }
+          else:
+                  body=      {"requests":[{'findReplace':{
+                  "find": find_str,
+                  "replacement": replace_str,
+                  "matchCase": True ,
+                  "matchEntireCell": True ,
+                  "searchByRegex": True ,
+                  "includeFormulas": True ,
+                  "sheetId": sheetId
+                  }}]
+
+               
+                  }
+                  
+          request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+    def __range__return(self,text):
+        arr=[]
+        if isinstance(text,tuple):
+            arr.append(text)
+            return arr
+        text=str(text)
+        
+        
+        if ':' in text:
+                _a,_b=text.split(':')
+                if re.findall('[a-z]',str(_a),re.IGNORECASE) and re.findall('[a-z]',str(_b),re.IGNORECASE) :
+                    colstart,colend=self.___get__index_start_end(text)
+                    rowstart=re.findall('\d+',str(_a),re.IGNORECASE)[0]
+                    rowend=re.findall('\d+',str(_b),re.IGNORECASE)[0]
+                    for i in range(int(colstart),int(colend)+1):
+                        for j in range(int(rowstart),int(rowend)+1):
+                            arr.append((i,j))
+                    
+                    
+        else:
+            find_= re.findall('[a-z]{1,3}',str(text),re.IGNORECASE)
+            if find_:
+                colstart=alphabet_num[find_[0].lower()]
+                rowend=re.findall('\d+',str(text),re.IGNORECASE)[0]
+                arr.append((int(colstart),int(rowend)))
+        return arr
+    def reset_color(self,set_range,**kwargs):
+        
+        self.setcolor(set_range,(255,255,255),'',**kwargs)
+    def ___color_request_body__(self,R,G,B,alpha,col_number,row_number,sheetId):
+        
+                       body= {
                             "updateCells":{
                             "rows":[{
                                     "values":[{"userEnteredFormat":{
@@ -1575,56 +1662,218 @@ class Sheet:
                                     "columnIndex": int(col_number)-1
                                     }
                             }
-                      }]
-                     }
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self.id ,body=body).execute()
-        
-        
+                      }
+                       return body
+   
+    
+    def set_color_PIL(self,ndarray,start_x,start_y,reqs_range,*args,**kwargs):# if want to use HEXcolor RGB set 0
+            
+            body={}
+            body["requests"]=[]
+            sheetId=0 # ID default  workbook1
+            alpha=1   # Transparent default 1
+            #ndarray=cv2.resize(ndarray, (400, 400), interpolation=cv2.INTER_CUBIC)
+            #height,width,_=ndarray.shape
+            width,height=ndarray.size
+            runpixel=0
+            
+            sheetId=  self.__arg_return_sheetid(0,**kwargs)
+            
+            for x in range(start_x,width+1):
+                for y in range(start_y,height+1):
+                    
+                    
+                    R,G,B=ndarray.getpixel((x-1,y-1))
                   
-        @property
-        def id(self):
-            return self._id
-        @property
-        def url(self):
-            return self._url
-        @property
-        def properties(self):
-            return self._properties
-        @property
-        def sub(self):
-            return self._sub
-        def getsheet(self):
-                global id_
+                    
+                    
+                    #R,G,B=ndarray[x-1,y-1]
+                    body["requests"].append(self.___color_request_body__(R,G,B,alpha,x,y,sheetId))
+                   
+                    runpixel+=1
+                    if runpixel>reqs_range:break
+                   
+                if y >=height and x<=width+1:
+                    start_y=1
+                if runpixel>reqs_range:break
                 
-                request = service_sheet.spreadsheets().get(spreadsheetId=id_, includeGridData=False)
-                response=request.execute()
-                self._sub={}
-                for i in response['sheets']:
-                    eachtitle=i['properties']['title']
-                    eachid=i['properties']['sheetId']
-                    eachindex=i['properties']['index']
-                    self._sub[eachindex]=eachid,eachtitle
-                    #self._sub[eachindex].title= eachtitle
-                    #self._sub[eachindex].id   = eachid
-                    #names = locals()
-                    #self.+names[self+]=564
-                self._title=response['properties']['title']
-                self._url=response['spreadsheetUrl']
-                self._properties=response['properties']
-           #except Exception as Err:
-             #   if 'was not found' in str(Err):return
-        def add_sheet(self,newpagename,*args):   #create　new page in exist spreadsheet
-            global id_
-            request_=[{"addSheet":{"properties":{"title": newpagename}}}]
-            if  args:
-                for new_page in args:
-                    request_.append({"addSheet":{"properties":{"title": new_page}}})
-            body={"requests":request_}
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_,body=body)
-            request.execute()
-            self.getsheet()
-        def delete_sheet(self,delete_pagename,*args):   #create　new page in exist spreadsheet
-                global id_
+                    
+            
+            max_col,max_row=self.get_sheet_size(sheetId)
+            
+      
+            addcol=0
+            addrow=0
+            if int(width)>int(max_col):
+                addcol=int(width)-int(max_col)
+                self.append_col(addcol,sheetId)
+            else:
+                delcol=abs(int(width)-int(max_col))
+                self.delete_col((0,delcol),sheetId)
+            if int(height)>int(max_row):
+                addrow=int(height)-int(max_row)
+                self.append_row(addrow,sheetId)
+            else:
+                delrow=abs(int(height)-int(max_row))
+                self.delete_row((0,delrow),sheetId)
+            self.adjust_col_row('all',1,'all',1,sheetId)
+            
+            if kwargs:
+                find_alpha=re.findall('alpha|transparent',str(kwargs),re.IGNORECASE)
+                if find_alpha and len(find_alpha)<2:
+                    
+                    alpha=int(kwargs[find_alpha[0]])
+                find_id=re.findall('sheetid|id',str(kwargs),re.IGNORECASE)
+                if find_id and len(find_id)<2:
+                   
+                    sheetId=int(kwargs[find_id[0]])
+            
+            
+            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+            
+            time.sleep(0.5)
+            print("Next Painting...")
+            if x>=width and y>=height:return ndarray
+            elif y>=height and x<=width:
+                y=1
+                x+=1
+            else:
+                y+=1
+            self.set_color_PIL(ndarray,x,y,reqs_range)
+    def set_color_ndarray(self,ndarray,start_x,start_y,*args,**kwargs):# if want to use HEXcolor RGB set 0
+            
+            body={}
+            body["requests"]=[]
+            sheetId=0 # ID default  workbook1
+            alpha=1   # Transparent default 1
+            #ndarray=cv2.resize(ndarray, (400, 400), interpolation=cv2.INTER_CUBIC)
+            height,width,_=ndarray.shape
+            runpixel=0
+            
+            sheetId=  self.__arg_return_sheetid(0,**kwargs)
+            
+            for x in range(start_x,width+1):
+                for y in range(start_y,height+1):
+                    runpixel+=1
+                    if runpixel>2500:break
+            
+                    R,G,B=ndarray[x-1,y-1]
+                    body["requests"].append(self.___color_request_body__(R,G,B,alpha,x,y,sheetId))
+                if runpixel>2500:break
+           
+            
+            
+            
+            max_col,max_row=self.get_sheet_size(sheetId)
+      
+            addcol=0
+            addrow=0
+            if int(width)>int(max_col):  addcol=int(width)-int(max_col)
+            if int(height)>int(max_row):  addrow=int(height)-int(max_row)
+            
+            if addcol: self.append_col(addcol,sheetId)
+            if addrow: self.append_row(addrow,sheetId)
+            self.adjust_col_row('all',10,'all',10,sheetId)
+            
+            if kwargs:
+                find_alpha=re.findall('alpha|transparent',str(kwargs),re.IGNORECASE)
+                if find_alpha and len(find_alpha)<2:
+                    
+                    alpha=int(kwargs[find_alpha[0]])
+                find_id=re.findall('sheetid|id',str(kwargs),re.IGNORECASE)
+                if find_id and len(find_id)<2:
+                   
+                    sheetId=int(kwargs[find_id[0]])
+            
+            
+            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+            if x>=width and y>=height:return ndarray
+            self.set_color_ndarray(ndarray,x,y)
+    def setcolor(self,set_range,RGB,*args,**kwargs):# if want to use HEXcolor RGB set 0
+            
+            coordinate_arr=self.__range__return(set_range)
+           
+            if not coordinate_arr:return
+            sheetId=0 # ID default  workbook1
+            alpha=1   # Transparent default 1
+            sheetId=  self.__arg_return_sheetid(0,**kwargs)
+            
+            
+            if kwargs:
+                find_alpha=re.findall('alpha|transparent',str(kwargs),re.IGNORECASE)
+                if find_alpha and len(find_alpha)<2:
+                    
+                    alpha=int(kwargs[find_alpha[0]])
+                find_id=re.findall('sheetid|id',str(kwargs),re.IGNORECASE)
+                if find_id and len(find_id)<2:
+                   
+                    sheetId=int(kwargs[find_id[0]])
+                    
+            if 'tuple'  in str(type(RGB)):
+                R,G,B=RGB
+            if args :
+                if '#' in str(args[0]) and 'tuple' not in str(type(RGB)): 
+                    R,G,B=HEX_to_RGB(args[0])
+            body={}
+            body["requests"]=[]
+            for each in coordinate_arr:
+                coll,roww=each
+                body["requests"].append(self.___color_request_body__(R,G,B,alpha,coll,roww,sheetId))
+                
+            
+           
+            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+                  
+    @property
+    def id(self):
+        return self._id
+    @id.setter
+    def id(self,newid):
+        self._id=newid
+    @property
+    def url(self):
+        return self._url
+    @property
+    def properties(self):
+        return self._properties
+    @property
+    def sub(self):
+        return self._sub
+    def getsheet(self):
+            
+            
+        
+            
+            request = service_sheet.spreadsheets().get(spreadsheetId=self._id, includeGridData=False)
+            response=request.execute()
+            self._sub={}
+            for i in response['sheets']:
+                eachtitle=i['properties']['title']
+                eachid=i['properties']['sheetId']
+                eachindex=i['properties']['index']
+                self._sub[eachindex]=eachid,eachtitle
+                #self._sub[eachindex].title= eachtitle
+                #self._sub[eachindex].id   = eachid
+                #names = locals()
+                #self.+names[self+]=564
+            self._title=response['properties']['title']
+            self._url=response['spreadsheetUrl']
+            self._properties=response['properties']
+       #except Exception as Err:
+         #   if 'was not found' in str(Err):return
+    def add_sheet(self,newpagename,*args):   #create　new page in exist spreadsheet
+        
+        
+        request_=[{"addSheet":{"properties":{"title": newpagename}}}]
+        if  args:
+            for new_page in args:
+                request_.append({"addSheet":{"properties":{"title": new_page}}})
+        body={"requests":request_}
+        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id,body=body)
+        request.execute()
+        self.getsheet()
+    def delete_sheet(self,delete_pagename,*args):   #create　new page in exist spreadsheet
+                
                 request_=[]
                 for i in self.sub:
                     sheet_id_,name_page=self.sub[i]
@@ -1634,117 +1883,119 @@ class Sheet:
                 
                         
                 body={"requests":request_}
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_,body=body)
+                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id,body=body)
                 request.execute()
                 self.getsheet()
-        @property
-        def title(self):
-            return self._title
-        @title.setter
-        def title(self,newname):
-            
-            self._title=newname
-            self.rename_sheet(newname)
-        @property
-        def subtitle(self):
-            return self._title
-        @title.setter
-        def title(self,newname,*args):
-            
-            self._title=newname
-            self.rename_sheet(newname)
-        def resubtitle(self,newname,args): 
-            if args:
-                oldname=newname
-                newname=args
-                for j in self.sub:
-                    sheetId,searname=self.sub[j]
-                    if oldname==searname:
-                       
-                      self.rename_workbook(sheetId,newname)
-                      return
-        def rename_sheet(self,newtitle):
-            body={"requests":[{
-                "updateSpreadsheetProperties":{
-                    "properties":{
-                        "title": newtitle},
-                        "fields": '*'}
-                  }]
-                 }
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_ ,body=body)
-            request.execute()
-        def rename_workbook(self,sheetId,newname):
-            body={"requests":[{
-                "updateSheetProperties":{
-                    "properties":{
-                        "sheetId":sheetId,"title": newname},"fields": 'title'}}]}
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=id_ ,body=body)
-            request.execute()
-        @classmethod    
-        def create(cls,filename,*args,**kwargs):  #create　new spreadsheet
-            global id_
-            sheet_page=[]
-            if kwargs:
+    @property
+    def title(self):
+        return self._title
+    @title.setter
+    def title(self,newname):
+        
+        self._title=newname
+        self.rename_sheet(newname)
+    @property
+    def subtitle(self):
+        return self._title
+    @title.setter
+    def title(self,newname,*args):
+        
+        self._title=newname
+        self.rename_sheet(newname)
+    def resubtitle(self,newname,args): 
+        if args:
+            oldname=newname
+            newname=args
+            for j in self.sub:
+                sheetId,searname=self.sub[j]
+                if oldname==searname:
+                   
+                  self.rename_workbook(sheetId,newname)
+                  return
+    def rename_sheet(self,newtitle):
+        body={"requests":[{
+            "updateSpreadsheetProperties":{
+                "properties":{
+                    "title": newtitle},
+                    "fields": '*'}
+              }]
+             }
+        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body)
+        request.execute()
+    def rename_workbook(self,sheetId,newname):
+        body={"requests":[{
+            "updateSheetProperties":{
+                "properties":{
+                    "sheetId":sheetId,"title": newname},"fields": 'title'}}]}
+        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body)
+        request.execute()
+    @classmethod    
+    def create(cls,filename,*args,**kwargs):  #create　new spreadsheet
+    
+        sheet_page=[]
+        if kwargs:
                     if 'folder' in kwargs:
                             foldername=kwargs['folder']
                             sheetid=Drive().create_newsheet(filename,folder=foldername)
-                            id_=sheetid
+                            
                             cls.id=sheetid
                             
                             cls.getsheet(cls)
                             return cls.id
-            if  args:
-                for new_page in args:
-                    sheet_page.append({"properties":{"title": new_page}})
-            body= {"properties": {"title":filename},"sheets":sheet_page }
-            request = service_sheet.spreadsheets().create(body=body)
-            response=request.execute()
-            
-            
-            id_=response['spreadsheetId']
-            cls.id=id_
-            cls.getsheet(cls)
+        if  args:
+            for new_page in args:
+                sheet_page.append({"properties":{"title": new_page}})
+        body= {"properties": {"title":filename},"sheets":sheet_page }
+        request = service_sheet.spreadsheets().create(body=body)
+        response=request.execute()
         
-        def copy(self,dst):             # copy a new workbook in exist spreadsheet
-            body={ 'destination_spreadsheet_id': self.id}
-            
-            request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self.id,sheetId=0,body=body)
-            request.execute()
-        def read(self,workRange):
-            response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self.id, ranges=workRange ).execute()
+        
+       # self._id=response['spreadsheetId']
+       # cls.id=self._id
+        cls._id=response['spreadsheetId']
+        cls.getsheet(cls)
+        
+        return cls._id
+    def copy(self,sheetId):             # copy a new workbook in exist spreadsheet
+        body={ 'destination_spreadsheet_id': self._id}
+        
+        request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self._id,sheetId=sheetId,body=body)
+        request.execute()
+    def read(self,workRange):
+        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=workRange ).execute()
+        try:
             if len(response.get('valueRanges')[0]['values'][0])==1 and len(response.get('valueRanges')[0]['values'])==1:
-            
-                return response.get('valueRanges')[0]['values'][0][0]
-            else:
-                return response.get('valueRanges')[0]['values']
-        def delete(self,workRange,*args):
-                self.write(workRange,'')
-        def write(self,workRange,content,*args):
-            
                 
-            writeData = {}
-            if 'list' not in str(type(content)):
-                content=[content]
-                writeData['values']=[content]
-            
-                      
-            
-            
-            elif 'list'in str(type(content)):
-                  if isinstance(content[0],list):# represent this is 2 dimensional list
-                       writeData['values']=content
-                  else:
-                       writeData['values']=[content]
-            if args:
-                writeData['majorDimension']="COLUMNS"
+                    return response.get('valueRanges')[0]['values'][0][0]
             else:
-                writeData['majorDimension']="ROWS"
-            writeData['range']= workRange
+                    return response.get('valueRanges')[0]['values']
+        except:
+            return ''
+    def delete(self,workRange,*args):
+        self.write(workRange,'')
+    def write(self,workRange,content,*args):
         
-       
+            
+        writeData = {}
+        if 'list' not in str(type(content)):
+            content=[content]
+            writeData['values']=[content]
         
-            request = service_sheet.spreadsheets().values().update(spreadsheetId=self.id, range=workRange,valueInputOption='RAW', body=writeData )
-            response = request.execute()
-
-
- 
+                  
+        
+        
+        elif 'list'in str(type(content)):
+              if isinstance(content[0],list):# represent this is 2 dimensional list
+                   writeData['values']=content
+              else:
+                   writeData['values']=[content]
+        if args:
+            writeData['majorDimension']="COLUMNS"
+        else:
+            writeData['majorDimension']="ROWS"
+        writeData['range']= workRange
+    
+   
+    
+        request = service_sheet.spreadsheets().values().update(spreadsheetId=self._id, range=workRange,valueInputOption='RAW', body=writeData )
+        response = request.execute()
