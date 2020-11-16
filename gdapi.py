@@ -249,6 +249,8 @@ class Drive:
             print("Download to default path: "+self._download_path)
            
             dst=self._download_path
+        if dst:
+            dst=dst[0]
         dict_of_find=self.find_file(file,1,view=0)#view= display found file
         temp_dict={}
         fileid=0
@@ -341,6 +343,7 @@ class Drive:
             while not done :
                 status, done = downloader.next_chunk()
                 print("Download %d%%" % int(status.progress() * 100))
+            
             
             filepath=dst+'\\'+name_
             with io.open(filepath,'wb') as f:
