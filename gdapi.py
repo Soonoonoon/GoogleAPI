@@ -245,6 +245,7 @@ class Drive:
                 fh.seek(0)
                 f.write(fh.read())
     def download(self,file,*dst):
+        file=str(file)
         if not dst:
             print("Download to default path: "+self._download_path)
            
@@ -283,9 +284,11 @@ class Drive:
                                 print(format_str(3,str(count)+'.'),format_str(40,name_),'| Size:',size)
                             
                                 temp_dict[str(count)]=i,name_
-        print("\nIf wnat to download:  1. %s  >> press 1:"%(temp_dict[str(1)][1]),'(* press enter to skip ) ')
-        chose=input('[* Chose more than one : press 1~3(chose: 1,2,3) or 1,3,5(chose: 1,3,5)]\n')
-        
+        print("\nIf wnat to download:  1. %s  >> press 1 "%(temp_dict[str(1)][1]),'(* press enter to skip ) ')
+        if count>1:
+          chose=input('[* Choose more than one : press 1~3(choose: 1,2,3) or 1,3,5(choose: 1,3,5)]\n')
+        else:
+          chose=input('>>\n')            
         if str(chose) in temp_dict:
                 fileid,name_s=temp_dict[str(chose)]
         elif chose:
@@ -570,6 +573,7 @@ class Drive:
         except :
           print("Delete Error")
     def delete(self,filename):
+      filename=str(filename)
       dict_of_find=self.find_file(filename,1,view=0)#view= display found file
       temp_dict={}
       fileid=0
@@ -603,8 +607,11 @@ class Drive:
                         
                             temp_dict[str(count)]=i,name_
       
-      print("\nIf wnat to delete:  1. %s  >> press 1:"%(temp_dict[str(1)][1]),' (* press enter to skip )')
-      chose=input('[* Chose more than one : press 1~3(chose: 1,2,3) or 1,3,5(chose: 1,3,5)]\n')
+      print("\nIf wnat to delete:  1. %s  >> press 1"%(temp_dict[str(1)][1]),' (* press enter to skip )')
+      if count>1:
+        chose=input('[* Choose more than one : press 1~3(choose: 1,2,3) or 1,3,5(choose: 1,3,5)]\n')
+      else:
+            chose=input('>>\n')
       if str(chose) in temp_dict:
                 fileid,name_s=temp_dict[str(chose)]
       elif chose:
