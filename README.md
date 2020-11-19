@@ -204,7 +204,7 @@ How to use Google Sheet and Google Drive API
    ### Use formula get result in different workbook
     sheet.formula("workbook2!B25",'sum(workbook1!B2:B5)')  # Get result in workbook2>B25 , execute function in wrokbook1 >B2:B25
 
-   ## Get col index
+   ## Get column index
     findname="ABC"
     index_col=sheet.get_col_index(sheetname,*sheetID,**kwargs)  # return index of column
     # kwargs :
@@ -218,7 +218,9 @@ How to use Google Sheet and Google Drive API
    ## Get_subsheet id
     sheet_id=sheet.getsub_id(findname)
     
-    
+   ## Get worksheet size (max column and max row)
+    sheetname="WORKBOOK"
+    sheet_max_column,sheet_max_row=sheet.get_sheet_size(sheetname=name) 
    ## Find string
     find_sting="string to find"
     find_string(find_sting,*sheetID,**kwargs)  # return a list of cell
