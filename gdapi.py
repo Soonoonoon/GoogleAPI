@@ -12,10 +12,13 @@ import datetime
 from  pprint  import pprint
 import sys
 import time
+import base64
+from bs4 import BeautifulSoup
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 # If modifying these scopes, delete the file token.pickle.
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
+Mail_SCOPES = ['https://mail.google.com/']
 # Download path default
 Download_path=os.path.split(sys.argv[0])[0]
 #mimetype dict
@@ -24,7 +27,7 @@ mimetype_dict={'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openx
 num_alphabet = {0:'',1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
 # alphabet <==> number
 alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
-
+Month_num={'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 
 def Exapnd_dict_alphabet_number():
     count=26
@@ -741,6 +744,8 @@ class Drive:
        
         service = build('drive', 'v3', credentials=creds)
         service_sheet = build('sheets', 'v4', credentials=creds)
+        
+
              
      
         # Call the Drive v3 API#
@@ -977,6 +982,32 @@ class Sheet:
               
               print("Can't find SheetID , automake sheetname: NewSheet"+str(timenow))
               print("Spreadsheet ID: " ,self._id)
+    def merge(self,range_,**sheetid):
+         
+         list_=self.__range__return(range_)
+         col1,row1=list_[0]
+         col2,row2=list_[-1]
+      
+         sheetid=0
+         if sheetid:
+             sheetid=sheetid['sheetid']
+         
+         top_header_format = [
+            {'mergeCells': {
+                'mergeType': 'MERGE_ALL',
+                'range': {
+                    'endColumnIndex': col2,
+                    'endRowIndex': row2,
+                    'sheetId': sheetid,
+                    'startColumnIndex': col1-1,
+                    'startRowIndex':row1-1
+                }
+            }}
+            ]
+         service_sheet.spreadsheets().batchUpdate(
+            spreadsheetId=self._id ,
+            body={'requests': top_header_format}
+        ).execute()
     def ___get__index_start_end(self,Colrange):
                 
                 if ',' in Colrange:
@@ -2009,3 +2040,160 @@ class Sheet:
     
         request = service_sheet.spreadsheets().values().update(spreadsheetId=self._id, range=workRange,valueInputOption='RAW', body=writeData )
         response = request.execute()
+class Gmail:
+    tokenpickle=''
+    json=''
+    def __init__(self,*args,**kwargs):
+        global service_mail
+        if args:
+            find_cred=re.findall('token|pickle|json',str(args[0]),re.IGNORECASE)
+            if find_cred:
+                if re.findall('token|pickle',str(find_cred[0]),re.IGNORECASE):
+                          self.tokenpickle=args[0]
+                else:
+                          self.json=args[0]
+                service_mail=self.main()
+        elif kwargs:
+            if 'token' in kwargs :
+                self.tokenpickle=kwargs['token']
+            if 'pickle' in kwargs :
+                self.tokenpickle=kwargs['pickle']
+            if 'json' in kwargs :
+                self.json=kwargs['json']
+            service_mail=self.main()
+    def list_all(self,*args,**kwargs):
+        print_=1
+        if 'print_' in kwargs:
+            print_=kwargs['print_']
+        if 'dict_'in kwargs:
+            dict_all=kwargs['dict_']
+        if not args:
+            dict_all={}
+            pageToken=None
+            count=0
+            
+        else:
+                pageToken=args[0]
+                count=  args[1]
+       
+        result=service_mail.users().messages().list(userId='me',pageToken=pageToken).execute()
+        if 'nextPageToken' not in result or 'messages' not in result:
+            return dict_all
+            
+        result_msg=result['messages']
+        for i_d in result_msg:
+            count+=1
+            if not  print_:    print(str(count),'.'+i_d['id'])
+            message = service_mail.users().messages().get(userId='me', id=i_d['id'],
+                                             format='full').execute()
+            if  print_:
+                for i in message['payload']['headers']:
+                    if 'subject' in str(i['name']).lower():
+                        subject=i.get('value')
+                    if 'from' in str(i['name']).lower():
+                        from_=i.get('value')
+                    if 'to' in str(i['name']).lower():
+                        to=i.get('value').split(',')[0]
+                ts=message['internalDate'][:10]
+                sendtime=datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S')
+                print(str(count),'.'+i_d['id'])
+                print("Sub  :",   subject.translate(non_bmp_map))
+                print("ID   :",i_d['id'])
+                print("From :",from_)
+                print("To   :",to)
+                print("Recv Time:",sendtime)
+                print("=====================")
+        return self.list_all(result['nextPageToken'],count,dict_=dict_all,print_=print_)
+    def get_attach_data(self,*args):
+         if arg:
+             msg_id,attch_id=arg[0],arg[1]
+             
+         data =  service_mail.users().messages().attachments().get(userId='me',messageId=msg_id, id=attch_id).execute()
+         return data
+    def read(self,*args):
+            data=''
+            if args:
+                id=args[0]
+                message = service_mail.users().messages().get(userId='me', id=id,
+                                             format='full').execute()
+            for i in message['payload']['headers']:
+                if 'subject' in str(i['name']).lower():
+                    subject=i.get('value')
+                if 'from' in str(i['name']).lower():
+                    from_=i.get('value')
+                if 'to' in str(i['name']).lower():
+                    to=i.get('value').split(',')[0]
+            ts=message['internalDate'][:10]
+            sendtime=datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S')
+            if 'data' not in message['payload']['body']:
+               list_=message['payload']['parts']
+               if len (list_)==1:
+                   data=message['payload']['parts'][0]['body']['data']
+               else:
+                   for _i_ in range(0,len(list_)):
+                       data_=message['payload']['parts'][_i_]['body']['data']
+                       data+=data_
+            else:    
+               data=message['payload']['body']['data']
+            data = data.replace("-","+").replace("_","/")
+            decoded_data = base64.b64decode(data)
+            soup = BeautifulSoup(decoded_data , "lxml")
+            print("Sub  :",   subject.translate(non_bmp_map))
+            print('Snap :',message['snippet'])
+            print("ID   :",   id)
+            print("From :",from_)
+            print("To   :",to)
+            print("Recv Time:",sendtime)
+            print("Content: \n",soup.text.replace('\u3000',''))
+            print("=====================")
+    def main(self):
+        """Shows basic usage of the Drive v3 API.
+        Prints the names and ids of the first 10 files the user has access to.
+        """
+        creds = None
+        service_account=0
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        
+        if os.path.exists(self.tokenpickle):
+            
+            with open(self.tokenpickle, 'rb') as token:
+                creds = pickle.load(token)
+         
+        # If there are no (valid) credentials available, let the user log in.
+        try:
+         if not creds or not creds.valid:
+            
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+               
+                if os.path.exists(self.json):
+                 with open(self.json,'r') as jsooon:
+                    if 'service_account' in str(jsooon.read()):
+                        service_account=1
+                if service_account:
+                    creds = ServiceAccountCredentials.from_json_keyfile_name(
+                        self.json, scopes=Mail_SCOPES)
+                    
+                    
+                else:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        self.json, Mail_SCOPES)
+                    creds = flow.run_local_server(port=8012)
+                   
+                    # Save the credentials for the next run
+                    self.tokenpickle='token.pickle'
+                    with open('token.pickle', 'wb') as token:
+                
+                        pickle.dump(creds, token)
+        except Exception as Errorlogin:
+            print(Errorlogin)
+            print("▲ If you don't set the json or pickle path, plz set the path before use ")
+            print("Use function: \n 1. chose_pickle (pickle_path)\n 2. chose_json   (json_path)")
+            return
+        
+        service_mail = build('gmail', 'v1', credentials=creds)  
+        return service_mail
+        
