@@ -1,6 +1,7 @@
 from __future__ import print_function
 import pickle
 import os.path
+import requests
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -13,6 +14,7 @@ from  pprint  import pprint
 import sys
 import time
 import base64
+import threading
 from bs4 import BeautifulSoup
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 # If modifying these scopes, delete the file token.pickle.
@@ -29,6 +31,147 @@ num_alphabet = {0:'',1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 
 alphabet_num = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
 Month_num={'jan':1,'feb':2,'mar':3,'apr':4,'may':5,'jun':6,'jul':7,'aug':8,'sep':9,'oct':10,'nov':11,'dec':12}
 
+def download_recursive(gd,size,dist,fileid,PickleFile,*arg,**kwargs):
+        if kwargs:
+                newgd=Drive(PickleFile)
+                if 'index' in kwargs:
+                   index=kwargs['index']
+                   
+                if 'last' in kwargs:
+                    last=1
+                    start=(index-1)*dist
+                    end=size
+                else:
+                    start=(index-1)*dist
+                    
+                    end=dist*(index-1)+dist
+                print(index, ' download')
+                print(start,end)
+                print('=====')
+                request = newgd.service.files().get_media(fileId=fileid)
+                request.headers["Range"] = "bytes={}-{}".format(start,end)
+                fh = io.BytesIO()
+                downloader = MediaIoBaseDownload(fh, request)
+
+            
+                done = 0
+                while not done :
+                    status, done = downloader.next_chunk()
+                    print("Download %d%%" % int(status.progress() * 100),str(index))
+                #fh = io.BytesIO(request.execute())
+                
+                gd.downloader[index-1]=fh.getvalue()
+                print("OK",index)
+                newgd.service.close()
+                newgd.service_sheet.close()
+
+        
+def split_avaerage(num,dist):
+        num=int(num)
+        if num<dist:return 1
+        times=num//dist
+        
+        if times<1:times=1
+        return times
+def download_thread(fileid,gd,dst,PickleFile):
+            filedict=gd.service.files().get(fileId=fileid,fields='*').execute()
+            name_=filedict['name']
+            mimeType_=filedict['mimeType']
+            ownedByMe_=filedict['ownedByMe']
+            if 'false' in str(ownedByMe_):return
+            if 'trashed' in filedict:
+                trash_=filedict['trashed']
+                if 'true' in str(trash_).lower().strip():return
+            
+            if 'folder'in str(mimeType_):
+                fold_name=dst+'\\'+str(name_)
+                if not os.path.isdir(fold_name):
+                    os.mkdir(fold_name)
+                    return
+            
+            size=filedict['size']
+            set_split_size=1024*1024*1024*2 #1GB
+            fh=''
+            
+            if int(size )>int(set_split_size):
+                
+                split_num_=split_avaerage(size,set_split_size)#分割成多少個
+                print(split_num_,123456)
+                gd.downloader=[0]*split_num_
+                for i in range(1,split_num_+1):
+                    time.sleep(2)
+                    if i==split_num_:
+                        
+                        threading.Thread(target=download_recursive,args=(gd,size,set_split_size,fileid,PickleFile),kwargs={'last':1,'index':i}).start()
+                    else:
+                        threading.Thread(target=download_recursive,args=(gd,size,set_split_size,fileid,PickleFile),kwargs={'download':1,'index':i}).start()
+                temp=[]
+                start=time.time()
+                while 1:
+                    if len(temp)>=split_num_:break
+                    time.sleep(25)
+                    if time.time()-start>480:print("OUT!!!")
+                    print(len(temp))
+                    for j in range(0,len(gd.downloader)):
+                        if j in temp:continue
+                        if gd.downloader[j]:
+                            
+                            temp.append(j)
+                fh=b''
+                for jj in gd.downloader:
+                    fh+=jj
+                filepath=dst+'\\'+name_
+                print('花費時間: ',time.time()-start)
+                with io.open(filepath,'wb') as f:
+                    
+                    f.write(fh)
+                
+                return
+            try:
+                
+                if 'application/vnd.google-apps' in str(mimeType_):
+                    if 'spreadsheet' in str(mimeType_):
+                        mimeType_='text/csv'
+                        name_=name_+'.csv'
+                    elif 'document'in str(mimeType_):
+                        mimeType_='application/msword'
+                        name_=name_+'.csv'
+                    
+                        request = gd.service.files().export_media(fileId=fileid,mimeType=mimeType_)
+                else:
+                    request = gd.service.files().get_media(fileId=fileid)
+                print(name_,mimeType_)
+                if not fh:
+                  fh = io.BytesIO()
+                  downloader = MediaIoBaseDownload(fh, request)
+
+            
+                done = 0
+                while not done :
+                    status, done = downloader.next_chunk()
+                    print("Download %d%%" % int(status.progress() * 100))
+                filepath=dst+'\\'+name_
+                with io.open(filepath,'wb') as f:
+                    fh.seek(0)
+                    f.write(fh.read())
+            except Exception as err:
+                    print(err)
+                    print(fileid,name_,mimeType_)
+                    if 'malware' in str(err) or 'spam' in str(err):
+                        request = gd.service.files().get_media(fileId=fileid,acknowledgeAbuse=True)
+                        fh = io.BytesIO()
+                        downloader = MediaIoBaseDownload(fh, request)
+
+                    
+                        done = 0
+                        while not done :
+                            status, done = downloader.next_chunk()
+                            print("Download %d%%" % int(status.progress() * 100))
+                        filepath=dst+'\\'+name_
+                        with io.open(filepath,'wb') as f:
+                            fh.seek(0)
+                            f.write(fh.read())
+    
 def Exapnd_dict_alphabet_number():
     count=26
     count1=1
@@ -101,10 +244,13 @@ def size_byte(size):
       if i==1:
           return str(size)+' Byte'
 class Drive:
+    all_folder={}
+
     PickleFile=''
     json_path=''
     def __init__(self,*credential_path):
         
+        self.downloader=[]
         self._download_path=Download_path
         if credential_path:
                         if '.json' in str(credential_path):
@@ -126,31 +272,90 @@ class Drive:
          else:
              print("Path is not exist")
     def chose_json(self,path):
-            global service,service_sheet
+            
             self.json_path=path
-            service,service_sheet=self.main()
+            self.service,self.service_sheet=self.main()
             
             self.json_path=path
     def chose_pickle(self,path):
-            global service,service_sheet
+            
             
             self.PickleFile=path
-            service,service_sheet=self.main()
+            self.service,self.service_sheet=self.main()
     def emptytrash(self):
-        service.files().emptyTrash().execute()        
+        self.service.files().emptyTrash().execute()
+    def get_newest_file(self,**kwargs):
+        now=datetime.datetime.now()
+        if kwargs:
+            if 'datetime' in kwargs:
+                now=kwargs['datetime']
+        
+        today=datetime.datetime(now.year,now.month,now.day,0,0)
+        timeutc_8=today-datetime.timedelta(hours=8)
+        lasttime=timeutc_8.strftime("%Y-%m-%dT%H:%M:%S")
+        x=self.service.files().list(                   q="createdTime>"+"'"+lasttime+"'"+"and trashed=False" ,
+                                                  spaces='drive',
+                                                  fields='*',
+                                                  pageSize=1000,
+                                                  pageToken=None).execute()
+        new_arr=[]
+        month_n=now.month
+        if now.month<10:
+                month_n='0'+str(now.month)
+        day_n=now.day
+        if now.day<10:
+                day_n='0'+str(now.day)
+        todayfile=str(now.year)+str(month_n)+str(now.day)+'.csv'
+        dict_temp={}
+        if os.path.isfile(todayfile):
+            with open(todayfile,'r') as tf:
+                for i in tf:
+                        
+                    id_,name=i.split(',')
+                    dict_temp[id_]=name
+        for i in x['files']:
+            fileid=i['id']
+            if fileid  in dict_temp:continue
+            createdTime=i['createdTime']
+            year=int(createdTime[:4])
+            month=int(createdTime[5:7])
+            day=int(createdTime[8:10])
+            hour=int(createdTime[11:13])
+            mins=int(createdTime[14:16])
+            secs=int(createdTime[17:19])
+            newtime=datetime.datetime(year,month,day,hour,mins,secs)+datetime.timedelta(hours=8)
+            link=i['webViewLink']
+            
+            name=i['name']
+            if fileid not in dict_temp:
+                new_arr.append(i)
+                dict_temp[fileid]=name
+                self.change_permissions(fileid,role='reader')
+        if new_arr:
+            
+            with open(todayfile,'a+') as tf:
+                for i in new_arr:
+                    name=i['name']
+                    fileid=i['id']
+                    tf.write(str(fileid))
+                    tf.write(',')
+                    tf.write(name)
+                    tf.write('\n')
+            return  new_arr
     def find_folder(self):
-                results = service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
+                results = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                               spaces='drive',
                                               fields='nextPageToken,files(ownedByMe,mimeType,id, name)',
                                               
                                               pageToken=None).execute()
+                
                 return results
     def find_file(self,filename,*args,**kwargs):
           show_=1
           if args:
             show_=0
     
-          items=self.list_all_file(**kwargs)          
+          items=self.list_all_file(**kwargs,view=0)          
                     
           
           if not items:return 0
@@ -171,7 +376,7 @@ class Drive:
             if show_:
               print("找到符合名稱的項目:")
             for i in itemfind:
-              filedict=service.files().get(fileId=i).execute()
+              filedict=self.service.files().get(fileId=i).execute()
               name_=filedict['name']
               mimetype=filedict['mimeType']
               dict_of_all[i]=name_,mimetype
@@ -179,7 +384,7 @@ class Drive:
           if similar :
            if show_:print("找到相似名稱的項目:")
            for i in similar:
-              filedict=service.files().get(fileId=i).execute()
+              filedict=self.service.files().get(fileId=i).execute()
               name_=filedict['name']
               mimetype=filedict['mimeType']
               dict_of_all[i]=name_,mimetype
@@ -199,62 +404,156 @@ class Drive:
           
           return dict_of_all
     def listdir(self,fileid):
-        response=service.files().list(q="'"+str(fileid)+"' in parents",
-                                          fields='files(id, name)',
-                                          ).execute()
-        return response['files']
-    def download_id(self,fileid,dst,*args):
         
+        response=self.service.files().list(q="'"+str(fileid)+"' in parents",
+                                          fields='files(id, name,mimeType,trashed)',
+                                          pageSize=101
+                                         ).execute()
+        result_=response['files']
+        if len(result_)>=100:
+                dict_all=self.list_all_file(view=0)
+                temp_dict=[]
+                
+           
+                for i in dict_all:
+                        
+                        if dict_all[i]['parents'][0].lower().strip()==fileid.lower():
+                                temp_dict.append(dict_all[i])
+                           
+               
+                return temp_dict
+        else:
+                return result_
+    
+    def _requests_download(self,fileid,dst,**kwargs):
+        filedict=self.service.files().get(fileId=fileid,fields='*').execute()
+        name_=filedict['name']
+        headers = {"Authorization": "Bearer A0AfH6SMCnI8nJDQ97yOKibKRx1mxvYQJV5RiduXB0cA1v3JPupkR780xgvS0FaIuvNUlY8EAuYy_HTTg78hLzrHifkEDlNkXCDFrYyj7oMbbwdWzijAqefm3UeFsIlN8tT37SXIvnmI51C1DGZfpju7cM4MdkBgsgiv2PSuJyhIWmq"}
+
+        request1 = gd.service.files().get_media(fileId=fileid)
+       # headers=request1.headers
+        url="https://www.googleapis.com/drive/v3/files/" + fileid + "?alt=media"
+        res = requests.get(url,headers=headers)
+        print(res.status_code)
+        filepath=dst+'\\'+name_
+        start=0
+        if kwargs:
+                if 'st' in kwargs:
+                        start=kwargs['st']
+                        
+        with open(filepath,'wb') as f:
+                   f.write(res.content)
+      
+    def download_id(self,fileid,dst,*args,**kwargs):
+        exception=[]
+        size=0
+        if kwargs:
+                
+                if 'exception' in kwargs:
+                        exception=kwargs['exception']
+                        
+               
+        if not args:
+                self.count=0
+                self.time_zero=time.time()
+        else:
+                self.count=args[0]
         if fileid:
             
-            filedict=service.files().get(fileId=fileid).execute()
+            
+            filedict=self.service.files().get(fileId=fileid,fields='*').execute()
             name_=filedict['name']
+            
+            if 'trashed' in filedict:
+                trash_=filedict['trashed']
+                if 'true' in str(trash_).lower().strip():return
             mimeType_=filedict['mimeType']
+            ownedByMe_=filedict['ownedByMe']
+            
+            if 'false' in str(ownedByMe_):return
             if not args:
                 print("Download " +name_ )
+                
             if 'folder'in str(mimeType_):
                 list_of_files=self.listdir(fileid)
-                fold_name=dst+'\\'+name_
+                fold_name=dst+'\\'+str(name_)
+               
                 if not os.path.isdir(fold_name):
                     os.mkdir(fold_name)
+                
+               
                 for each in list_of_files:
                     
-                    self.download_id(each['id'],fold_name,1)
+                    self.download_id(each['id'],fold_name,1,exception=exception)
+                   
+                    
                 print("Download 100%")
-                return
-            if 'application/vnd.google-apps' in str(mimeType_):
-                if 'spreadsheet' in str(mimeType_):
-                    mimeType_='text/csv'
-                    name_=name_+'.csv'
-                elif 'document'in str(mimeType_):
-                    mimeType_='application/msword'
-                    name_=name_+'.docx'
                 
-                request = service.files().export_media(fileId=fileid,mimeType=mimeType_)
-            else:
-                request = service.files().get_media(fileId=fileid)
-            fh = io.BytesIO()
-            downloader = MediaIoBaseDownload(fh, request)
+                return
+            if 1:
+                self.count+=1
+                filepath=dst+'\\'+name_
+                if 'size' in filedict:
+                    size=filedict['size']
+                    if int(size)>1024*1024*1024:
+                          
+                             filepath=dst+'\\[DriverBig]'+name_
+                             with open(filepath,'wb') as f:
+                                 
+                                    f.write(b"")
+                             return
+                            
+              
+                
+               
+                if 'application/vnd.google-apps' in str(mimeType_):
+                    
+                    if 'spreadsheet' in str(mimeType_):
+                        mimeType_='text/csv'
+                        name_=name_+'.csv'
+                  
+                    elif 'document'in str(mimeType_) and 'doc' in str(name_).lower():
+                        mimeType_='application/msword'
+                        name_=name_+'.docx'
+                    elif 'document'in str(mimeType_):
+                        mimeType_='text/plain'
+                        name_=name_+'.txt'
+                    request = self.service.files().export_media(fileId=fileid,mimeType=mimeType_)
+                else:
+                   
+                    
+                    request = self.service.files().get_media(fileId=fileid)
+                fh = io.BytesIO()
+                
+                downloader = MediaIoBaseDownload(fh, request)
+                if fileid in exception:return
+                try:
+                        done = 0
+                                        # 如果想下載包含病毒的檔案 ,acknowledgeAbuse=True
+                        while not done :# request = gd.service.files().get_media(fileId=fileid,acknowledgeAbuse=True)
+                            status, done = downloader.next_chunk()
+                            if not args:
+                              print("Download %d%%" % int(status.progress() * 100))
+                        
+                        filepath=dst+'\\'+name_
+                        with io.open(filepath,'wb') as f:
+                            fh.seek(0)
+                            f.write(fh.read())
+                except:
+                        filepath=dst+'\\[DriverError]'+name_
+                        with io.open(filepath,'wb') as f:
+                            fh.seek(0)
+                            f.write(fh.read())
             
-            
-            done = 0
-            while not done :
-                status, done = downloader.next_chunk()
-                if not args:
-                  print("Download %d%%" % int(status.progress() * 100))
-            
-            filepath=dst+'\\'+name_
-            with io.open(filepath,'wb') as f:
-                fh.seek(0)
-                f.write(fh.read())
     def download(self,file,*dst):
+        if dst:
+            dst=dst[0]    
         file=str(file)
         if not dst:
             print("Download to default path: "+self._download_path)
            
             dst=self._download_path
-        if dst:
-            dst=dst[0]
+        
         dict_of_find=self.find_file(file,1,view=0)#view= display found file
         temp_dict={}
         fileid=0
@@ -271,22 +570,25 @@ class Drive:
                                 list_files=self.listdir(i)
                                 size=self.get_size(i)
                                 print(format_str(3,str(count)+'.'),name_+"  (Folder) :"+"( Total size: "+size+" )")
-                               
+                                
                                 temp_dict[str(count)]=i,name_
                                 count+=1
+                            
                                 for each in list_files:
-                                    if each['id'] in dict_of_find:
+                                  
                                         
                                         size=self.get_size(each['id'])
                                         print('╘═'+format_str(3,str(count)+'.'),format_str(40,each['name']),'| Size:',size)
                                         alreadyprint.append(each['id'])
                                         temp_dict[str(count)]=each['id'],each['name']
+                                        
                                         count+=1
                             else:
                                 size=self.get_size(i)
                                 print(format_str(3,str(count)+'.'),format_str(40,name_),'| Size:',size)
                             
                                 temp_dict[str(count)]=i,name_
+        if not temp_dict:return
         print("\nIf wnat to download:  1. %s  >> press 1 "%(temp_dict[str(1)][1]),'(* press enter to skip ) ')
         if count>1:
           chose=input('[* Choose more than one : press 1~3(choose: 1,2,3) or 1,3,5(choose: 1,3,5)]\n')
@@ -315,7 +617,7 @@ class Drive:
                 
         if fileid and 'list' not in str(type(fileid)):
             
-            filedict=service.files().get(fileId=fileid).execute()
+            filedict=self.service.files().get(fileId=fileid).execute()
             name_=filedict['name']
             mimeType_=filedict['mimeType']
             
@@ -331,41 +633,62 @@ class Drive:
                 print("Download 100%")
                 return
             if 'application/vnd.google-apps' in str(mimeType_):
-                if 'spreadsheet' in str(mimeType_):
-                    mimeType_='text/csv'
-                    name_=name_+'.csv'
-                elif 'document'in str(mimeType_):
-                    mimeType_='application/msword'
-                    name_=name_+'.csv'
-                
-                request = service.files().export_media(fileId=fileid,mimeType=mimeType_)
+                    
+                    if 'spreadsheet' in str(mimeType_):
+                        mimeType_='text/csv'
+                        name_=name_+'.csv'
+                  
+                    elif 'document'in str(mimeType_) and 'doc' in str(name_).lower():
+                        mimeType_='application/msword'
+                        name_=name_+'.docx'
+                    elif 'document'in str(mimeType_):
+                        mimeType_='text/plain'
+                        name_=name_+'.txt'
+                    request = self.service.files().export_media(fileId=fileid,mimeType=mimeType_)
             else:
-                request = service.files().get_media(fileId=fileid)
+                    request = self.service.files().get_media(fileId=fileid)
             fh = io.BytesIO()
             downloader = MediaIoBaseDownload(fh, request)
+            try:
+                        
+                        done = 0
+                                        # 如果想下載包含病毒的檔案 ,acknowledgeAbuse=True
+                        while not done :# request = gd.service.files().get_media(fileId=fileid,acknowledgeAbuse=True)
+                            status, done = downloader.next_chunk()
+                            print("Download %d%%" % int(status.progress() * 100))
+                       
+                        filepath=dst+'\\'+name_
+                        with io.open(filepath,'wb') as f:
+                            fh.seek(0)
+                            f.write(fh.read())
+            except Exception as er:
+                        print(er)
+                       
+                        filepath=dst+'\\[Error]'+name_
+                        with io.open(filepath,'wb') as f:
+                            fh.seek(0)
+                            f.write(fh.read())
             
             
-            done = 0
-            while not done :
-                status, done = downloader.next_chunk()
-                print("Download %d%%" % int(status.progress() * 100))
-            
-            
-            filepath=dst+'\\'+name_
-            with io.open(filepath,'wb') as f:
-                fh.seek(0)
-                f.write(fh.read())
-    def change_permissions(self,file_id):# 將某ID的檔案權限更改
-        service.permissions().create(fileId=file_id,
+    def change_permissions(self,file_id,**kwarg):# 將某ID的檔案權限更改
+        type_='anyone'
+        role_='writer'
+        if kwarg:
+            if 'type' in kwarg:
+                type_=kwarg['type']
+            if 'role' in kwarg:
+                role_=kwarg['role']
+        self.service.permissions().create(fileId=file_id,
                                              body= {
-                                            'role': 'writer',
-                                            'type': 'anyone',
+                                            'role': role_,
+                                            'type': type_,
                                               }
                                             ).execute()
+    
     def create_newsheet(self,*filename,**folder):
             
             if not filename:
-                filename='NewSheet'
+                filename='NewSheet'+str(timenow)
             
             if folder or len(filename)>1:
                 if len(filename)>1:
@@ -381,7 +704,7 @@ class Drive:
                     'parents':[folderid],
                     'mimeType': 'application/vnd.google-apps.spreadsheet'
                     }
-                    file = service.files().create(body=file_metadata).execute()
+                    file = self.service.files().create(body=file_metadata).execute()
                    
                     return file['id']
                 else:
@@ -391,7 +714,7 @@ class Drive:
                     'parents':[folderid],
                     'mimeType': 'application/vnd.google-apps.spreadsheet'
                     }
-                    file = service.files().create(body=file_metadata).execute()
+                    file = self.service.files().create(body=file_metadata).execute()
                     return file['id']
                 
             file_metadata = {
@@ -399,7 +722,7 @@ class Drive:
             'mimeType': 'application/vnd.google-apps.spreadsheet'
             }
             
-            file = service.files().create(body=file_metadata).execute()
+            file = self.service.files().create(body=file_metadata).execute()
             
             return file['id']
     def create_doc(self,*filename):
@@ -410,7 +733,7 @@ class Drive:
         'mimeType': 'application/vnd.google-apps.document'
         }
         
-        file = service.files().create(body=file_metadata).execute()
+        file = self.service.files().create(body=file_metadata).execute()
         
         return file['id']
     def create_Slides(self,*filename):
@@ -421,7 +744,7 @@ class Drive:
         'mimeType': 'application/vnd.google-apps.presentation'
         }
         
-        file = service.files().create(body=file_metadata).execute()
+        file = self.service.files().create(body=file_metadata).execute()
         
         return file['id']
     def create_form(self,*filename):
@@ -432,11 +755,11 @@ class Drive:
         'mimeType': 'application/vnd.google-apps.form'
         }
         
-        file = service.files().create(body=file_metadata).execute()
+        file = self.service.files().create(body=file_metadata).execute()
         
         return file['id']
     def find_folder_id(self,foldername):
-          results = service.files().list(     q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'",
+          results = self.service.files().list(     q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'",
                                               spaces='drive',                                              
                                               fields='nextPageToken, files(id, name)',
                                               pageToken=None).execute()
@@ -452,25 +775,46 @@ class Drive:
                      #folderID=id_
                      return id_
           return 0
-    def upload(self,filepath,*dstpath):# 上傳檔案到特定資料夾
+    def upload(self,filepath,*dstpath,**kwarg):# 上傳檔案到特定資料夾
         filename=''
         foldername=''
-        if os.path.isdir(filepath) :
+        initial_foldername=''
+        initial_id=''
+        parents_id=''
+        folderID=''
+        folder_id=''
+        if kwarg:
+                if 'folder_id' in kwarg:# 特定資料夾的ID
+                         folder_id=kwarg['folder_id']
+                if 'initial_foldername' in kwarg:
+                        initial_foldername=kwarg['initial_foldername']
+                if 'parents_id' in kwarg:# 特定資料夾的ID 等同 folder_id
+                        parents_id=kwarg['parents_id']
+                if 'initial_id' in kwarg:
+                        initial_id=kwarg['initial_id']
+        if parents_id or folder_id:
+                    folderID=parents_id
+        if os.path.isdir(filepath) :# dir file
             filepath=os.path.abspath(filepath)
             foldername=os.path.basename(filepath)
-            folderID=''
+            
+            
             if dstpath:
                 
                 foldername=os.path.dirname(dstpath[0])
+           
                 if not foldername:
                     foldername=dstpath[0]
                 folderID=self.find_folder_id(foldername)
+                if parents_id:
+                    folderID=parents_id
                 if folderID:
                     file_metadata = {
                     'name': foldername,
                     'parents' : [folderID],
                     'mimeType': 'application/vnd.google-apps.folder'
                     }
+                    file = self.service.files().create(body=file_metadata).execute()
                 else:
                      
                      file_metadata = {
@@ -479,31 +823,32 @@ class Drive:
                     'mimeType': 'application/vnd.google-apps.folder'
                      }
 
-                     file = service.files().create(body=file_metadata).execute()
+                     file = self.service.files().create(body=file_metadata).execute()
                      folderID=file['id']
                      
-            
-            if not folderID:
-                
-                
-                folderID=self.find_folder_id(foldername)
-              
-                
-                if not folderID:
-                    file_metadata = {
-                        'name': foldername,
+            else:
+                    if not folderID:
                         
-                        'mimeType': 'application/vnd.google-apps.folder'
-                        }
-                    file = service.files().create(body=file_metadata).execute()
+                        
+                        folderID=self.find_folder_id(foldername)
+                      
+                        
+                    if not folderID:
+                            file_metadata = {
+                                'name': foldername,
+                                
+                                'mimeType': 'application/vnd.google-apps.folder'
+                                }
+                            file = self.service.files().create(body=file_metadata).execute()
+                            
+                    else:
+                            file_metadata = {
+                            'name': foldername,
+                            'parents' : [folderID],
+                            'mimeType': 'application/vnd.google-apps.folder'
+                            }
+                            file = self.service.files().create(body=file_metadata).execute()
                     
-                else:
-                    file_metadata = {
-                    'name': foldername,
-                    'parents' : [folderID],
-                    'mimeType': 'application/vnd.google-apps.folder'
-                    }
-            
             for i in os.listdir(filepath):
                 eachnewpath=filepath+'/'+i
                 
@@ -515,7 +860,7 @@ class Drive:
                     
                    
                     self.upload(eachnewpath,dstpath)
-            return
+            return 
         if dstpath:
         
             foldername=os.path.dirname(dstpath[0])
@@ -529,7 +874,7 @@ class Drive:
             else:
                 file_type='application/octet-stream'
         else:
-            print("Mimetype not found , try to upload this folder")
+            print("Mimetype not found , try to upload this folder directly")
             foldername=os.path.basename(dstpath[0])
             filename=os.path.basename(filepath)
             Extension=os.path.splitext(filename)[-1].replace('.','')
@@ -546,11 +891,11 @@ class Drive:
        
         if foldername:
           
-          folderID=0
-          folderID=self.find_folder_id(foldername)
+          if not folderID and not parents_id:
+              folderID=self.find_folder_id(foldername)
           
          
-          if  not folderID:
+          if  not folderID and not parents_id:
               file_metadata = { 'name': filename}
           else:
               file_metadata = {
@@ -560,19 +905,28 @@ class Drive:
         else:
               file_metadata = { 'name': filename}          
         
-        
+        if parents_id:
+                    folderID=parents_id
+                    file_metadata = {
+                        'name': filename,
+                        'parents': [folderID]
+                        }
+      
         media = MediaFileUpload(filepath,
                                 mimetype=file_type,
                                 resumable=True)
-        file = service.files().create(body=file_metadata,
-                                            media_body=media,
+            
+        file = self.service.files().create(body=file_metadata,
+                                            media_body=media,supportsAllDrives=True,
                                             fields='id').execute()
+        
         print("Upload Finish !")
+        return file
     def delete_id(self,fileid):
-        file_=service.files().get(fileId=fileid).execute()
+        file_=self.service.files().get(fileId=fileid).execute()
         print("Delete: ",file_['name'])
         try:
-            service.files().delete(fileId=fileid).execute()
+            self.service.files().delete(fileId=fileid).execute()
         except :
           print("Delete Error")
     def delete(self,filename):
@@ -644,55 +998,68 @@ class Drive:
         service: Drive API service instance.
         file_id: ID of the file to delete.
       """
-      file_=service.files().get(fileId=fileid).execute()
+      file_=self.service.files().get(fileId=fileid).execute()
       print("Delete: ",file_['name'])
       try:
-            service.files().delete(fileId=fileid).execute()
+            self.service.files().delete(fileId=fileid).execute()
       except :
           print("Delete Error")
     def get_weblink(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = service.files().get(fileId=fileid,fields='webViewLink').execute()['webViewLink']
+        results = self.service.files().get(fileId=fileid,fields='webViewLink').execute()['webViewLink']
         return results
     def get_storageQuota(self):
-       storage=service.about().get(fields='*').execute()['storageQuota']
+       storage=self.service.about().get(fields='*').execute()['storageQuota']
     
        alreadyuse='Usage: '+size_byte(int(storage['usage']))
-       limit='Limit Usage: '+size_byte(int(storage['limit']))
+       if 'limit' in storage:
+         limit='Limit Usage: '+size_byte(int(storage['limit']))
        trash="Trash Usage: " +size_byte(int(storage['usageInDriveTrash']))
        
        return alreadyuse,limit
     def get_size(self,fileid,*arg):
+      
         dict_={1:1024,2:1024**2,3:1024**3,4:10**12}
         dict_unit={1:'KB',2:'MB',3:'GB',4:'TB'}
         try:
-          type_=get_type(fileid)
+          type_=self.get_type(fileid)
         except:type_=''
-        if 'folder' in str(type_):
+        if 'folder' in str(type_).lower():
             sizes=0
             list_files=self.listdir(fileid)
             for j in list_files:
+             
+               
+                if 'true' in str(j['trashed']).lower():
+                
+                        continue
                 size=self.get_size(j['id'],0)
                 sizes+=int(size)
+            if arg:  return sizes
+            
             return size_byte(sizes)
-        results = service.files().get(fileId=fileid,fields='*').execute()['size']
+        
+        
+        results = self.service.files().get(fileId=fileid,fields='size').execute()['size']
+        
         if arg:  return results
+
         return size_byte(int(results))
     def get_type(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = service.files().get(fileId=fileid,fields='mimeType').execute()['mimeType']
+        results = self.service.files().get(fileId=fileid,fields='mimeType').execute()['mimeType']
         return results
     def get_lastModifyingUser(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = service.files().get(fileId=fileid,fields='lastModifyingUser').execute()['lastModifyingUser']
+        results = self.service.files().get(fileId=fileid,fields='lastModifyingUser').execute()['lastModifyingUser']
         return results
     def get_shared(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = service.files().get(fileId=fileid,fields='shared').execute()['shared']
+        results = self.service.files().get(fileId=fileid,fields='shared').execute()['shared']
         return results
     def main(self):
         """Shows basic usage of the Drive v3 API.
@@ -763,7 +1130,7 @@ class Drive:
         writeData['range']= workRange
         
         
-        request = service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW',body=writeData )
+        request = self.service_sheet.spreadsheets().values().update(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW',body=writeData )
         response = request.execute()   
     def sheet_append(self,sheetid,workRange,content):
         if 'list' not in str(type(content)):
@@ -777,78 +1144,115 @@ class Drive:
         
        
         
-        request = service_sheet.spreadsheets().values().append(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=writeData )
+        request = self.service_sheet.spreadsheets().values().append(spreadsheetId=sheetid, range=workRange,valueInputOption='RAW', insertDataOption='INSERT_ROWS', body=writeData )
         response = request.execute()
+    def get_initial_folderid(self,*arg):
+        allid=self.find_folder()['files']
+        temp=[]
+        if arg:
+            temp=arg[0]
+        for i in allid:
+            temp.append(i['id'])
+        dict_=self.list_all_file(view=0)
+
+        for __,item in dict_.items():
+                     
+                     id_=item['id']
+                     name_=item['name']
+                     type_=item['mimeType']
+                     parents_=item['parents'][0]
+                     trashed_=item['trashed']
+                     if 'true' in str(trashed_).lower():continue
+                     if parents_ not in temp:
+                        
+                         break
+        ini_=self.service.files().get(fileId=parents_,fields='*'). execute()
+        
+        ini_id=ini_['id']
+        ini_name_=ini_['name']
+        if ('my' not in ini_name_ and '我的雲端硬碟' not in ini_name_) or 'parents'  in ini_:self.get_initial_folderid(temp)
+        
+        return ini_,dict_,ini_id
     def get_filelist(self):
-        dict_=list_all_file(view=0)
+        dict_=self.list_all_file(view=0)
         if dict_:
           sizeall=0
           print("Writing down...")
           print('Download Path: ',Download_path+'\\File_list.csv')
           with open (Download_path+'\\File_list.csv','w+',encoding='utf-8-sig')as store_csv:
-           store_csv.write('Name')
-           store_csv.write(',')
-           store_csv.write('ID')
-           store_csv.write(',')
-           store_csv.write('MimeType')
-           store_csv.write(',')
-           store_csv.write('Size')
-           store_csv.write(',')
-           store_csv.write('Link')
-           store_csv.write(',')
-           store_csv.write('LastModifyUser')
-           store_csv.write(',')
-           store_csv.write('Shared')
-           store_csv.write('\n')
-           for __,item in dict_.items():
-                 
-                 id_=item['id']
-                 name_=item['name']
-                 type_=item['mimeType']
-                 if 'size' not in item:
-                     size=0
-                 else:size=item['size']
-                 
-                 sizeall+=int(size)
-                 link=item['webViewLink']
-                 shared=item['shared']
-                 if not shared:
-                     shared="Not shared"
-                 else:
-                     shared="Shared"
-                 user=item['lastModifyingUser']['emailAddress']
-                 sizef=lambda s:'-' if not s else size_byte(s)
-                 
-                 store_csv.write(str(name_))
-                 store_csv.write(',')
-                 store_csv.write(str(id_))
-                 store_csv.write(',')
-                 store_csv.write(str(type_))
-                 store_csv.write(',')
-                 store_csv.write(sizef(size))
-                 store_csv.write(',')
-                 store_csv.write(str(link))
-                 store_csv.write(',')
-                 store_csv.write(shared)                 
-                 store_csv.write(',')
-                 store_csv.write(str(user))
-                 store_csv.write('\n')
-           store_csv.write(str('總計'))
-          
-           store_csv.write(',')
-           store_csv.write(str(','))
-           store_csv.write(',')
-           store_csv.write(sizef(sizeall))
-           store_csv.write(',')
-           store_csv.write(str(','))
-           store_csv.write(',')
-           store_csv.write(',')                 
-           store_csv.write(',')
-           store_csv.write(str(','))
-           store_csv.write('\n')
+               store_csv.write('Name')
+               store_csv.write(',')
+               store_csv.write('ID')
+               store_csv.write(',')
+               store_csv.write('MimeType')
+               store_csv.write(',')
+               store_csv.write('Size')
+               store_csv.write(',')
+               store_csv.write('Link')
+               store_csv.write(',')
+               store_csv.write('LastModifyUser')
+               store_csv.write(',')
+               store_csv.write('Shared')
+
+               store_csv.write(',')
+               store_csv.write('Createtime')
+               store_csv.write('\n')
+               for __,item in dict_.items():
+                     
+                     id_=item['id']
+                     
+                     name_=item['name']
+                     type_=item['mimeType']
+                     if 'size' not in item:
+                         size=0
+                     else:size=item['size']
+                     
+                     sizeall+=int(size)
+                     link=item['webViewLink']
+                     shared=item['shared']
+                     if not shared:
+                         shared="Not shared"
+                     else:
+                         shared="Shared"
+                     user=item['lastModifyingUser']['emailAddress']
+                     sizef=lambda s:'-' if not s else size_byte(s)
+                     createtime=''
+                     if 'createdTime' in item:
+                       createtime=item['createdTime']
+                     store_csv.write(str(name_))
+                     store_csv.write(',')
+                     store_csv.write(str(id_))
+                     store_csv.write(',')
+                     store_csv.write(str(type_))
+                     store_csv.write(',')
+                     store_csv.write(sizef(size))
+                     store_csv.write(',')
+                     store_csv.write(str(link))
+                     store_csv.write(',')
+                     store_csv.write(str(user))                 
+                     store_csv.write(',')
+                     store_csv.write(shared)
+                     store_csv.write(',')
+                     store_csv.write(str(createtime))
+                     store_csv.write('\n')
+               store_csv.write(str('總計'))
+              
+               store_csv.write(',')
+               store_csv.write(str(','))
+               store_csv.write(',')
+               store_csv.write(sizef(sizeall))
+               store_csv.write(',')
+               store_csv.write(str(','))
+               store_csv.write(',')
+               store_csv.write(',')                 
+               store_csv.write(',')
+               store_csv.write(str(','))
+               store_csv.write(str(','))
+               store_csv.write('\n')
+               print('OK')
     def list_all_file(self,*args,**kwargs):
          view=1
-         
+         dict_all={}
          
          if kwargs:
              if'view' in kwargs:
@@ -867,9 +1271,9 @@ class Drive:
              
              pageToken=args[0]
              count=args[1]
-         results = service.files().list(
+         results = self.service.files().list(
                                               spaces='drive',
-                                              fields='nextPageToken, files(webViewLink,size,shared,lastModifyingUser,mimeType,ownedByMe,id, name)',
+                                              fields='*',
                                               pageSize=1000,
                                               pageToken=pageToken).execute()
          
@@ -884,23 +1288,23 @@ class Drive:
              
              return dict_all
          
-         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,**kwargs)
+         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,view=view)
     def mkdir(self,foldername):
                 file_metadata = {
                     'name': foldername,
                     
                     'mimeType': 'application/vnd.google-apps.folder'
                     }
-                file = service.files().create(body=file_metadata).execute()
+                file = self.service.files().create(body=file_metadata).execute()
                 return file['id']
     def move(self,fileId,folder):
             folder_id=self.find_folder_id(folder)
             if not folder_id:print("Destination of folder was not found")
             if folder_id:
-               file = service.files().get(fileId=fileId,
+               file = self.service.files().get(fileId=fileId,
                                          fields='parents').execute()
                previous_parents = ",".join(file.get('parents')) 
-               file = service.files().update(fileId=fileId,
+               file = self.service.files().update(fileId=fileId,
                                             addParents=folder_id,
                                             removeParents=previous_parents,
                                             fields='id, parents').execute()
@@ -1004,7 +1408,7 @@ class Sheet:
                 }
             }}
             ]
-         service_sheet.spreadsheets().batchUpdate(
+         self.service_sheet.spreadsheets().batchUpdate(
             spreadsheetId=self._id ,
             body={'requests': top_header_format}
         ).execute()
@@ -1111,7 +1515,7 @@ class Sheet:
                         }
                       ]
                     }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+                request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
     def adjust_row(self,Rowrange,Row_pixel,*sheetID,**kwargs):
        
                 Rowrange=str(Rowrange)
@@ -1162,7 +1566,7 @@ class Sheet:
                         }
                       ]
                     }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+                request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
                 
     def adjust_col(self,Colrange,Col_pixel,*sheetID,**kwargs):
                 Colrange=str(Colrange)
@@ -1203,7 +1607,7 @@ class Sheet:
                         }
                       ]
                     }
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+                request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
     
     def delete_row(self,range_,*sheetID,**kwargs):
                start,end=range_
@@ -1223,7 +1627,7 @@ class Sheet:
 
                             }}}]}
                        
-               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+               request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
           
     def append_row(self,length,*sheetID,**kwargs):
                sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
@@ -1240,7 +1644,7 @@ class Sheet:
                     }
                     
                 ]}
-               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+               request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
     def _find_columb_alphabet_to_number(self,text):
             text=str(text)
             if ':' in text or ',' in text:
@@ -1287,7 +1691,7 @@ class Sheet:
                               "startIndex": int(start)-1,
                               "endIndex": int(end)
                             }}}]}
-               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()           
+               request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()           
     def append_col(self,length,*sheetID,**kwargs):
                sheetId=  self.__arg_return_sheetid(*sheetID,**kwargs)
                if sheetId==None:return "Not found this sheet name"
@@ -1299,7 +1703,7 @@ class Sheet:
                         "length": length}
                       }
                     ]}
-               request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+               request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
     def __arg_return_sheetname(self,*sheetID,**kwargs):
         sheetId=0
         sheet_name=''
@@ -1392,23 +1796,23 @@ class Sheet:
                     }
                   ]
                 }
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+            request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
     
     def get_sheet_size(self,*sheetID,**kwargs): # check specific worksheet Max column and Max row
         sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
-        response=service_sheet.spreadsheets().values().get(spreadsheetId=self._id, range=sheet_name).execute()['range']
+        response=self.service_sheet.spreadsheets().values().get(spreadsheetId=self._id, range=sheet_name).execute()['range']
         
         index1=response.find('!')
         range1,range2=response[index1+1:].split(':')
        
         max_row=re.findall('\d+',str(range2),re.IGNORECASE)[0]
         max_column=alphabet_num[re.findall('[a-z]{1,3}',str(range2),re.IGNORECASE)[0].lower()]
-        return max_column,max_row
+        return int(max_column),int(max_row)
     def find_string(self,find_sting,*sheetID,**kwargs):
         find_list=[]
         sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
         if not sheet_name:return "Not Found"
-        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
+        response=self.service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
         
         for i in range(0,len(response)):
             for j in range (0,len(response[i])):
@@ -1421,7 +1825,7 @@ class Sheet:
     def get_col_index(self,colname,*sheetID,**kwargs):
         sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
         if not sheet_name:return "Not Found "
-        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()
+        response=self.service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()
         for i in response['valueRanges']:
             for j in range(0,len(i['values'][0])):
                
@@ -1433,7 +1837,7 @@ class Sheet:
     def get_row_index(self,rowname,*sheetID,**kwargs): # return first find row index        
         sheet_name=self.__arg_return_sheetname(*sheetID,**kwargs)
         if not sheet_name:return "Not Found"
-        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
+        response=self.service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=sheet_name ).execute()['valueRanges'][0]['values']
         
         for i in range(0,len(response)):
             for j in range (0,len(response[i])):
@@ -1582,7 +1986,7 @@ class Sheet:
                     }
                   ]
                 }
-          request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+          request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
           
     def getsub_id(self,find):
                       
@@ -1651,7 +2055,7 @@ class Sheet:
                
                   }
                   
-          request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+          request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
     def __range__return(self,text):
         arr=[]
         if isinstance(text,tuple):
@@ -1770,7 +2174,7 @@ class Sheet:
                     sheetId=int(kwargs[find_id[0]])
             
             
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+            request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
             
             time.sleep(0.5)
             print("Next Painting...")
@@ -1827,7 +2231,7 @@ class Sheet:
                     sheetId=int(kwargs[find_id[0]])
             
             
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+            request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
             if x>=width and y>=height:return ndarray
             self.set_color_ndarray(ndarray,x,y)
     def setcolor(self,set_range,RGB,*args,**kwargs):# if want to use HEXcolor RGB set 0
@@ -1863,7 +2267,7 @@ class Sheet:
                 
             
            
-            request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
+            request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body).execute()
                   
     @property
     def id(self):
@@ -1885,7 +2289,7 @@ class Sheet:
             
         
             
-            request = service_sheet.spreadsheets().get(spreadsheetId=self._id, includeGridData=False)
+            request = self.service_sheet.spreadsheets().get(spreadsheetId=self._id, includeGridData=False)
             response=request.execute()
             self._sub={}
             for i in response['sheets']:
@@ -1910,7 +2314,7 @@ class Sheet:
             for new_page in args:
                 request_.append({"addSheet":{"properties":{"title": new_page}}})
         body={"requests":request_}
-        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id,body=body)
+        request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id,body=body)
         request.execute()
         self.getsheet()
     def delete_sheet(self,delete_pagename,*args):   #create　new page in exist spreadsheet
@@ -1924,7 +2328,7 @@ class Sheet:
                 
                         
                 body={"requests":request_}
-                request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id,body=body)
+                request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id,body=body)
                 request.execute()
                 self.getsheet()
     @property
@@ -1961,14 +2365,14 @@ class Sheet:
                     "fields": '*'}
               }]
              }
-        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body)
+        request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body)
         request.execute()
     def rename_workbook(self,sheetId,newname):
         body={"requests":[{
             "updateSheetProperties":{
                 "properties":{
                     "sheetId":sheetId,"title": newname},"fields": 'title'}}]}
-        request = service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body)
+        request = self.service_sheet.spreadsheets().batchUpdate(spreadsheetId=self._id ,body=body)
         request.execute()
     @classmethod    
     def create(cls,filename,*args,**kwargs):  #create　new spreadsheet
@@ -1987,7 +2391,7 @@ class Sheet:
             for new_page in args:
                 sheet_page.append({"properties":{"title": new_page}})
         body= {"properties": {"title":filename},"sheets":sheet_page }
-        request = service_sheet.spreadsheets().create(body=body)
+        request = self.service_sheet.spreadsheets().create(body=body)
         response=request.execute()
         
         
@@ -2000,10 +2404,10 @@ class Sheet:
     def copy(self,sheetId):             # copy a new workbook in exist spreadsheet
         body={ 'destination_spreadsheet_id': self._id}
         
-        request = service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self._id,sheetId=sheetId,body=body)
+        request = self.service_sheet.spreadsheets().sheets().copyTo(spreadsheetId=self._id,sheetId=sheetId,body=body)
         request.execute()
     def read(self,workRange):
-        response=service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=workRange ).execute()
+        response=self.service_sheet.spreadsheets().values().batchGet(spreadsheetId=self._id, ranges=workRange ).execute()
         try:
             if len(response.get('valueRanges')[0]['values'][0])==1 and len(response.get('valueRanges')[0]['values'])==1:
                 
@@ -2038,7 +2442,7 @@ class Sheet:
     
    
     
-        request = service_sheet.spreadsheets().values().update(spreadsheetId=self._id, range=workRange,valueInputOption='RAW', body=writeData )
+        request = self.service_sheet.spreadsheets().values().update(spreadsheetId=self._id, range=workRange,valueInputOption='RAW', body=writeData )
         response = request.execute()
 class Gmail:
     tokenpickle=''
