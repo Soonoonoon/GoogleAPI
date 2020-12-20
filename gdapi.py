@@ -297,7 +297,7 @@ class Drive:
                                                   spaces='drive',
                                                   fields='*',
                                                   pageSize=1000,
-                                                  pageToken=None).execute()
+                                                  pageToken=None,supportsAllDrives=True).execute()
         new_arr=[]
         month_n=now.month
         if now.month<10:
@@ -411,7 +411,7 @@ class Drive:
                                          ).execute()
         result_=response['files']
         if len(result_)>=100:
-                dict_all=self.list_all_file(view=0)
+                dict_all=self.list_all_file(view=0,stop=10000)
                 temp_dict=[]
                 
            
@@ -686,17 +686,20 @@ class Drive:
                                             ).execute()
     
     def create_newsheet(self,*filename,**folder):
-            
+            folderid=None
+            foldername=''
             if not filename:
                 filename='NewSheet'+str(timenow)
             
             if folder or len(filename)>1:
-                if len(filename)>1:
+                if 'folder_id' in folder:
+                        folderid=folder['folder_id']
+                elif len(filename)>1:
                     foldername=filename[1]
                 elif folder:
                     foldername=folder['folder']
-                 
-                folderid=self.find_folder_id(foldername)
+                if foldername: 
+                  folderid=self.find_folder_id(foldername)
                 if folderid:
                     file_metadata = {
                     
@@ -704,7 +707,7 @@ class Drive:
                     'parents':[folderid],
                     'mimeType': 'application/vnd.google-apps.spreadsheet'
                     }
-                    file = self.service.files().create(body=file_metadata).execute()
+                    file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
                    
                     return file['id']
                 else:
@@ -714,7 +717,7 @@ class Drive:
                     'parents':[folderid],
                     'mimeType': 'application/vnd.google-apps.spreadsheet'
                     }
-                    file = self.service.files().create(body=file_metadata).execute()
+                    file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
                     return file['id']
                 
             file_metadata = {
@@ -722,7 +725,7 @@ class Drive:
             'mimeType': 'application/vnd.google-apps.spreadsheet'
             }
             
-            file = self.service.files().create(body=file_metadata).execute()
+            file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
             
             return file['id']
     def create_doc(self,*filename):
@@ -733,7 +736,7 @@ class Drive:
         'mimeType': 'application/vnd.google-apps.document'
         }
         
-        file = self.service.files().create(body=file_metadata).execute()
+        file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
         
         return file['id']
     def create_Slides(self,*filename):
@@ -744,7 +747,7 @@ class Drive:
         'mimeType': 'application/vnd.google-apps.presentation'
         }
         
-        file = self.service.files().create(body=file_metadata).execute()
+        file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
         
         return file['id']
     def create_form(self,*filename):
@@ -755,14 +758,14 @@ class Drive:
         'mimeType': 'application/vnd.google-apps.form'
         }
         
-        file = self.service.files().create(body=file_metadata).execute()
+        file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
         
         return file['id']
     def find_folder_id(self,foldername):
           results = self.service.files().list(     q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'",
                                               spaces='drive',                                              
                                               fields='nextPageToken, files(id, name)',
-                                              pageToken=None).execute()
+                                              pageToken=None,supportsAllDrives=True).execute()
           items = results.get('files', [])
           
           if not items:return 0
@@ -1041,7 +1044,7 @@ class Drive:
             return size_byte(sizes)
         
         
-        results = self.service.files().get(fileId=fileid,fields='size').execute()['size']
+        results = self.service.files().get(fileId=fileid,fields='size',supportsAllDrives=True).execute()['size']
         
         if arg:  return results
 
@@ -1153,13 +1156,17 @@ class Drive:
             temp=arg[0]
         for i in allid:
             temp.append(i['id'])
-        dict_=self.list_all_file(view=0)
+        dict_=self.list_all_file(view=0,stop=100)
 
         for __,item in dict_.items():
-                     
+                    
                      id_=item['id']
                      name_=item['name']
+                     if 'ownedByMe' in item:
+                             ownedByMe=item['ownedByMe']
+                             if 'true' not in str(ownedByMe).lower():continue
                      type_=item['mimeType']
+                     if 'parents' not in item:continue
                      parents_=item['parents'][0]
                      trashed_=item['trashed']
                      if 'true' in str(trashed_).lower():continue
@@ -1174,6 +1181,7 @@ class Drive:
         
         return ini_,dict_,ini_id
     def get_filelist(self):
+        print("Wait...")     
         dict_=self.list_all_file(view=0)
         if dict_:
           sizeall=0
@@ -1253,14 +1261,16 @@ class Drive:
     def list_all_file(self,*args,**kwargs):
          view=1
          dict_all={}
-         
+         stopnum=0
          if kwargs:
+               
              if'view' in kwargs:
                  if kwargs['view']==0:
                      view=0
              if 'dict_all' in (kwargs):
                  dict_all=kwargs['dict_all']
-             
+             if 'stop' in kwargs:
+                     stopnum=kwargs['stop']
          if not args:
              count=0
              pageToken=None
@@ -1277,18 +1287,23 @@ class Drive:
                                               pageSize=1000,
                                               pageToken=pageToken).execute()
          
+         if stopnum:# 避免過久
+                 if len(dict_all) > int(stopnum):return dict_all
          for j in results['files']:
              count+=1
              if j['ownedByMe']:
                
-               if view:print(str(count)+'. '+str(j['name']))
-               dict_all[j['id']]=j
+               if view:print(str(count)+'. '+str(j['name']),' - OwnedByme')
+             else:
+               
+               if view:print(str(count)+'. '+str(j['name']),' - OwnedByOther')
+             dict_all[j['id']]=j
                  
          if not results['files'] or 'nextPageToken' not in results:
              
              return dict_all
          
-         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,view=view)
+         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,view=view,stop=stopnum)
     def mkdir(self,foldername):
                 file_metadata = {
                     'name': foldername,
@@ -1297,8 +1312,12 @@ class Drive:
                     }
                 file = self.service.files().create(body=file_metadata).execute()
                 return file['id']
-    def move(self,fileId,folder):
-            folder_id=self.find_folder_id(folder)
+    def move(self,fileId,*folder,**kwargs):
+            if kwargs:
+                    if 'folder_id' in kwargs:
+                            folder_id=kwargs['folder_id']
+            if folder:
+              folder_id=self.find_folder_id(folder)
             if not folder_id:print("Destination of folder was not found")
             if folder_id:
                file = self.service.files().get(fileId=fileId,
