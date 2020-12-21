@@ -687,29 +687,39 @@ class Drive:
     
     def create_newsheet(self,*filename,**folder):
             folderid=None
+            folderid2=None
             foldername=''
+            newfolder=None
             if not filename:
                 filename='NewSheet'+str(timenow)
             
-            if folder or len(filename)>1:
+            if folder :
+                if 'newfolder'in folder:
+                         newfolder=folder['newfolder']
+                if 'foldername' in folder:
+                        foldername=folder['foldername'] # second folder
                 if 'folder_id' in folder:
-                        folderid=folder['folder_id']
-                elif len(filename)>1:
-                    foldername=filename[1]
-                elif folder:
-                    foldername=folder['folder']
+                        folderid=folder['folder_id'] #top folder
+                if newfolder:
+                       if not folderid2:
+                          folderid2=self.mkdir(newfolder,folder_id=folderid) 
+                
                 if foldername: 
-                  folderid=self.find_folder_id(foldername)
-                if folderid:
+                  folderid2=self.find_folder_id(foldername)
+                  if not folderid2:
+                          folderid2=self.mkdir(foldername,folder_id=folderid)
+                if folderid2 and folderid:
                     file_metadata = {
                     
                     'name': filename,
-                    'parents':[folderid],
+                    'parents':[folderid2],
                     'mimeType': 'application/vnd.google-apps.spreadsheet'
                     }
                     file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
                    
+                    
                     return file['id']
+                
                 else:
                     folderid=self.mkdir(foldername)
                     file_metadata = {
@@ -1304,13 +1314,23 @@ class Drive:
              return dict_all
          
          return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,view=view,stop=stopnum)
-    def mkdir(self,foldername):
-                file_metadata = {
-                    'name': foldername,
+    def mkdir(self,foldername,folder_id=None):
+                if folder_id:
+                        file_metadata = {
+                            'name': foldername,
+                            'parents':[folder_id],
                     
-                    'mimeType': 'application/vnd.google-apps.folder'
-                    }
-                file = self.service.files().create(body=file_metadata).execute()
+                            'mimeType': 'application/vnd.google-apps.folder'
+                            }
+                        file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
+                else:
+                        
+                        file_metadata = {
+                            'name': foldername,
+                            
+                            'mimeType': 'application/vnd.google-apps.folder'
+                            }
+                        file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
                 return file['id']
     def move(self,fileId,*folder,**kwargs):
             if kwargs:
