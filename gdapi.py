@@ -372,8 +372,9 @@ class Drive:
                 results = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                               spaces='drive',
                                               fields='nextPageToken,files(mimeType,id, name)',
-                                              supportsAllDrives=True,
+                                              
                                               pageSize=201,
+                                              supportsAllDrives=True,
                                               includeItemsFromAllDrives=True,
                                               pageToken=None).execute()
                 
@@ -392,17 +393,21 @@ class Drive:
           if args:
             show_=0
           
-          items=self.list_all_file(view=0,q="name contains '"+filename+"'",fields='files(mimeType,id, name)')          
+          items=self.list_all_file(view=0,q="name ='"+filename+"' and trashed=false",fields='files(mimeType,id, name)')          
           
-          if not items:return 0
+          if not items:return "Not Found"
           itemfind=[]
           similar=[]
+          
           dict_of_all={}
           for __,item in items.items():
-                
+                 description='File'
                  id_=item['id']
                  name_=item['name']
-                 
+                 type_=item['mimeType']
+
+                 if 'fold' in str(type_).lower():
+                         description='Folder'
                  if filename==name_:
                      itemfind.append(id_)
                  else:
@@ -412,19 +417,19 @@ class Drive:
             if show_:
               print("找到符合名稱的項目:")
             for i in itemfind:
-              filedict=self.service.files().get(fileId=i).execute()
+              filedict=self.service.files().get(fileId=i,supportsAllDrives=True).execute()
               name_=filedict['name']
               mimetype=filedict['mimeType']
               dict_of_all[i]=name_,mimetype
-              if show_:print('ID: '+i+" | Name: {:<20}".format(name_))
+              if show_:print('ID: '+i+" | Name: {:<20}".format(name_)+" | "+description)
           if similar :
            if show_:print("找到相似名稱的項目:")
            for i in similar:
-              filedict=self.service.files().get(fileId=i).execute()
+              filedict=self.service.files().get(fileId=i,supportsAllDrives=True).execute()
               name_=filedict['name']
               mimetype=filedict['mimeType']
               dict_of_all[i]=name_,mimetype
-              if show_:print('ID: '+i+" | Name: {:<20}".format(name_))
+              if show_:print('ID: '+i+" | Name: {:<20}".format(name_)+" | "+description)
           if not itemfind and not similar:
               print("找不到項目")
               return 0
@@ -851,6 +856,7 @@ class Drive:
           items = results.get('files', [])
         
           arr=[]
+          
           if not items:
                   if len(items)>=100 or len(items)==0:
                         dict_all=self.list_all_file(view=0,q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'")
@@ -859,13 +865,13 @@ class Drive:
                         
                    
                         for i in dict_all:
-                                
-                              temp_dict.append(dict_all[i])
+                              arr.append(dict_all[i]['id'])  
+                             # temp_dict.append(dict_all[i])
                                    
                         
-                        return temp_dict
+                        return arr
                   else:
-                        return result_
+                        return arr
          
           for item in items:
                  id_=item['id']
@@ -876,7 +882,7 @@ class Drive:
                      if showpath:
                        path=self.get_path(id_)
                        arr.append((id_,path))
-                     else:arr.append(id)
+                     else:arr.append(id_)
                              
           return arr
          
@@ -1400,7 +1406,7 @@ class Drive:
              
              pageToken=args[0]
              count=args[1]
-    
+
          results = self.service.files().list( q=query,
                                               spaces='drive',
                                               fields=fields,
