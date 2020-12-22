@@ -725,7 +725,17 @@ class Drive:
                    
                     
                     return file['id']
-                
+                elif folderid:
+                    file_metadata = {
+                    
+                    'name': filename,
+                    'parents':[folderid],
+                    'mimeType': 'application/vnd.google-apps.spreadsheet'
+                    }
+                    file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
+                   
+                    
+                    return file['id']
                 else:
                     folderid=self.mkdir(foldername)
                     file_metadata = {
