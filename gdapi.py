@@ -18,7 +18,6 @@ import threading
 from bs4 import BeautifulSoup
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 # If modifying these scopes, delete the file token.pickle.
-
 SCOPES = ['https://www.googleapis.com/auth/drive']
 Mail_SCOPES = ['https://mail.google.com/']
 # Download path default
@@ -263,6 +262,7 @@ class Drive:
                             return 
                             
     @property
+                       
     def Download_path(self):
         return self._download_path
     @Download_path.setter
@@ -271,6 +271,12 @@ class Drive:
            self._download_path=setpath
          else:
              print("Path is not exist")
+    def sheet(self,*sheetid,**kwargs):
+        
+            sheet_id=''
+            if sheetid:
+                    sheet_id=sheetid[0]
+            return  Sheet(sheet_id,service_sheet=self.service_sheet)        
     def chose_json(self,path):
             
             self.json_path=path
@@ -1392,10 +1398,15 @@ class Drive:
 
 class Sheet:
     formula_use_data='for_formula_use_!A1'
-    def __init__(self,*sheetid,**kwargs):
+    service_sheet=''
+    drive=''
+    def __init__(self,*sheetid,drive=None,service_sheet=None):
+        if service_sheet:
+                self.service_sheet=service_sheet
+                
         
-        
-        
+        if drive:
+                self.service_sheet=drive.service_sheet
         if sheetid:
            self._id=sheetid[0]
            
