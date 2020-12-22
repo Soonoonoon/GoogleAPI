@@ -247,8 +247,12 @@ class Drive:
 
     PickleFile=''
     json_path=''
-    def __init__(self,*credential_path):
-        
+    def __init__(self,*credential_path,thread_=None):
+        self.THREAD_RUN=None
+        self.RunDict_all=None # for initial dict of all
+        if thread_:
+                self.THREAD_RUN=1 # for initial Dict of all
+        self.dict_of_all_drive={}
         self.downloader=[]
         self._download_path=Download_path
         if credential_path:
@@ -282,12 +286,26 @@ class Drive:
             self.json_path=path
             self.service,self.service_sheet=self.main()
             
-            self.json_path=path
+            
+            if self.service and not self.THREAD_RUN and self.RunDict_all:
+                    threading.Thread(target=self._initial_dict).start()
+    def _initial_dict(self):
+             try:
+                    if self.PickleFile:
+                               gd2=Drive(self.PickleFile,thread_=1)
+                    elif self.json_path:
+                               gd2=Drive(self.json_path,thread_=1)
+                    self.dict_of_all_drive=gd2.list_all_file(view=0,fields='files(id,name)')
+             except Exception as er:
+                     print(er)
+                     print("initial wrong on dictall")
     def chose_pickle(self,path):
             
             
             self.PickleFile=path
             self.service,self.service_sheet=self.main()
+            if self.service and not self.THREAD_RUN and self.RunDict_all:
+                    threading.Thread(target=self._initial_dict).start()
     def emptytrash(self):
         self.service.files().emptyTrash().execute()
     def get_newest_file(self,**kwargs):
@@ -348,21 +366,33 @@ class Drive:
                     tf.write(name)
                     tf.write('\n')
             return  new_arr
-    def find_folder(self):
+    def find_folder(self,*arg):
+                
+                        
                 results = self.service.files().list(q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                                               spaces='drive',
-                                              fields='nextPageToken,files(ownedByMe,mimeType,id, name)',
-                                              
+                                              fields='nextPageToken,files(mimeType,id, name)',
+                                              supportsAllDrives=True,
+                                              pageSize=201,
+                                              includeItemsFromAllDrives=True,
                                               pageToken=None).execute()
                 
-                return results
+                result_=results['files']
+                
+                if len(result_)>=200:
+                        
+                        result_=self.list_all_file(view=0,q="mimeType='application/vnd.google-apps.folder' and trashed=false",fields='files(mimeType,id, name)')
+
+
+                        return result_
+                else:
+                        return result_
     def find_file(self,filename,*args,**kwargs):
           show_=1
           if args:
             show_=0
-    
-          items=self.list_all_file(**kwargs,view=0)          
-                    
+          
+          items=self.list_all_file(view=0,q="name contains '"+filename+"'",fields='files(mimeType,id, name)')          
           
           if not items:return 0
           itemfind=[]
@@ -412,19 +442,20 @@ class Drive:
     def listdir(self,fileid):
         
         response=self.service.files().list(q="'"+str(fileid)+"' in parents",
-                                          fields='files(id, name,mimeType,trashed)',
-                                          pageSize=101
+                                          fields='files(id, name,mimeType,trashed)',includeItemsFromAllDrives=True,
+                                          pageSize=1000,supportsAllDrives=True
                                          ).execute()
         result_=response['files']
-        if len(result_)>=100:
-                dict_all=self.list_all_file(view=0,stop=10000)
+       
+        if len(result_)>=100 or len(result_)==0:
+                dict_all=self.list_all_file(view=0,q="'"+str(fileid)+"' in parents",fields='files(id,name,mimeType,trashed)')
                 temp_dict=[]
-                
+              
            
                 for i in dict_all:
-                        
-                        if dict_all[i]['parents'][0].lower().strip()==fileid.lower():
-                                temp_dict.append(dict_all[i])
+                        if 'trashed' in  dict_all[i]:
+                                 if 'true' in str(dict_all[i]['trashed']).lower():continue
+                        temp_dict.append(dict_all[i])
                            
                
                 return temp_dict
@@ -467,7 +498,7 @@ class Drive:
         if fileid:
             
             
-            filedict=self.service.files().get(fileId=fileid,fields='*').execute()
+            filedict=self.service.files().get(fileId=fileid,fields='*', supportsAllDrives=True).execute()
             name_=filedict['name']
             
             if 'trashed' in filedict:
@@ -623,7 +654,7 @@ class Drive:
                 
         if fileid and 'list' not in str(type(fileid)):
             
-            filedict=self.service.files().get(fileId=fileid).execute()
+            filedict=self.service.files().get(fileId=fileid, supportsAllDrives=True).execute()
             name_=filedict['name']
             mimeType_=filedict['mimeType']
             
@@ -787,23 +818,68 @@ class Drive:
         file = self.service.files().create(body=file_metadata,supportsAllDrives=True).execute()
         
         return file['id']
-    def find_folder_id(self,foldername):
+    def get_name(self,fileid):
+            filedict=self.service.files().get(fileId=fileid,fields='*',supportsAllDrives=True).execute()
+            return filedict['name']
+    def get_path(self,fileid,path=None):
+           
+            filedict=self.service.files().get(fileId=fileid,fields='*',supportsAllDrives=True).execute()
+            if 'parents' not in filedict:
+                    file_name=filedict['name']
+                    path=os.path.join(file_name,path)
+                    return path
+            folder_name=self.get_name(filedict['parents'][0])
+            file_name=filedict['name']
+            if not path:
+                    path=file_name
+            else:
+                    path=os.path.join(file_name,path)
+            return self.get_path(filedict['parents'][0],path=path)
+    def get_dirname(self,fileid):
+            filedict=self.service.files().get(fileId=fileid,fields='*',supportsAllDrives=True).execute()
+            if 'parents' not in filedict:
+                    return path
+            folder_name=self.get_name(filedict['parents'][0])
+            file_name=filedict['name']
+            
+            return filedict['parents'][0],folder_name
+    def find_folder_id(self,foldername,showpath=None):
           results = self.service.files().list(     q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'",
                                               spaces='drive',                                              
-                                              fields='nextPageToken, files(id, name)',
+                                              fields='nextPageToken, files(id, name)',includeItemsFromAllDrives=True,
                                               pageToken=None,supportsAllDrives=True).execute()
           items = results.get('files', [])
-          
-          if not items:return 0
-          
+        
+          arr=[]
+          if not items:
+                  if len(items)>=100 or len(items)==0:
+                        dict_all=self.list_all_file(view=0,q="mimeType='application/vnd.google-apps.folder' and trashed=false and name='"+foldername+"'")
+                        temp_dict=[]
+                        
+                        
+                   
+                        for i in dict_all:
+                                
+                              temp_dict.append(dict_all[i])
+                                   
+                        
+                        return temp_dict
+                  else:
+                        return result_
+         
           for item in items:
                  id_=item['id']
                  name_=item['name']
                  
                  if foldername==name_:
                      #folderID=id_
-                     return id_
-          return 0
+                     if showpath:
+                       path=self.get_path(id_)
+                       arr.append((id_,path))
+                     else:arr.append(id)
+                             
+          return arr
+         
     def upload(self,filepath,*dstpath,**kwarg):# 上傳檔案到特定資料夾
         filename=''
         foldername=''
@@ -1078,17 +1154,17 @@ class Drive:
     def get_type(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = self.service.files().get(fileId=fileid,fields='mimeType').execute()['mimeType']
+        results = self.service.files().get(fileId=fileid,fields='mimeType', supportsAllDrives=True).execute()['mimeType']
         return results
     def get_lastModifyingUser(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = self.service.files().get(fileId=fileid,fields='lastModifyingUser').execute()['lastModifyingUser']
+        results = self.service.files().get(fileId=fileid,fields='lastModifyingUser', supportsAllDrives=True).execute()['lastModifyingUser']
         return results
     def get_shared(self,fileid):
         # fields = get what you want
         # file resource url=https://developers.google.com/drive/api/v3/reference/files
-        results = self.service.files().get(fileId=fileid,fields='shared').execute()['shared']
+        results = self.service.files().get(fileId=fileid,fields='shared', supportsAllDrives=True).execute()['shared']
         return results
     def main(self):
         """Shows basic usage of the Drive v3 API.
@@ -1182,7 +1258,7 @@ class Drive:
             temp=arg[0]
         for i in allid:
             temp.append(i['id'])
-        dict_=self.list_all_file(view=0,stop=100)
+        dict_=self.list_all_file(view=0,stop=500)
 
         for __,item in dict_.items():
                     
@@ -1285,11 +1361,27 @@ class Drive:
                store_csv.write('\n')
                print('OK')
     def list_all_file(self,*args,**kwargs):
+         
+         
          view=1
          dict_all={}
-         stopnum=0
+         stopnum=None
+         query=''
+         fields='*'
          if kwargs:
-               
+             if 'pre_load'in kwargs:#skip run this func.
+                     if self.dict_of_all_drive:
+                        
+                         return self.dict_of_all_drive
+        
+             if 'fields' in kwargs:
+                     fields=kwargs['fields']
+                     fields='nextPageToken,'+fields
+             if 'query' in kwargs or 'q' in kwargs:
+                     if 'query' in kwargs:
+                        query=kwargs['query']
+                     else:
+                        query=kwargs['q']     
              if'view' in kwargs:
                  if kwargs['view']==0:
                      view=0
@@ -1297,6 +1389,7 @@ class Drive:
                  dict_all=kwargs['dict_all']
              if 'stop' in kwargs:
                      stopnum=kwargs['stop']
+         
          if not args:
              count=0
              pageToken=None
@@ -1307,29 +1400,39 @@ class Drive:
              
              pageToken=args[0]
              count=args[1]
-         results = self.service.files().list(
+    
+         results = self.service.files().list( q=query,
                                               spaces='drive',
-                                              fields='*',
+                                              fields=fields,
                                               pageSize=1000,
-                                              pageToken=pageToken).execute()
-         
+                                              includeItemsFromAllDrives=True,
+                                              pageToken=pageToken,supportsAllDrives=True).execute()
+        
          if stopnum:# 避免過久
                  if len(dict_all) > int(stopnum):return dict_all
          for j in results['files']:
              count+=1
-             if j['ownedByMe']:
-               
-               if view:print(str(count)+'. '+str(j['name']),' - OwnedByme')
+             if'ownedByMe' in j:
+                     if j['ownedByMe']:
+                       
+                       if view:print(str(count)+'. '+str(j['name']),' - OwnedByme')
+                     else:
+                       
+                       if view:print(str(count)+'. '+str(j['name']),' - OwnedByOther')
              else:
-               
-               if view:print(str(count)+'. '+str(j['name']),' - OwnedByOther')
+                     if view:print(str(count)+'. '+str(j['name']))
              dict_all[j['id']]=j
                  
          if not results['files'] or 'nextPageToken' not in results:
-             
+             self.dict_of_all_drive=dict_all
              return dict_all
          
-         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,view=view,stop=stopnum)
+         return self.list_all_file(results['nextPageToken'],count,dict_all=dict_all,view=view,stop=stopnum,query=query,fields=fields)
+    def get_all(self,fileid):
+            results = self.service.files().get( fileId=fileid,
+                                              fields='*',
+                                              supportsAllDrives=True).execute()
+            return results
     def mkdir(self,foldername,folder_id=None):
                 if folder_id:
                         file_metadata = {
@@ -1357,12 +1460,12 @@ class Drive:
             if not folder_id:print("Destination of folder was not found")
             if folder_id:
                file = self.service.files().get(fileId=fileId,
-                                         fields='parents').execute()
+                                         fields='parents', supportsAllDrives=True).execute()
                previous_parents = ",".join(file.get('parents')) 
                file = self.service.files().update(fileId=fileId,
                                             addParents=folder_id,
                                             removeParents=previous_parents,
-                                            fields='id, parents').execute()
+                                            fields='id, parents', supportsAllDrives=True).execute()
     def delete_emptyfolder(self):
         result=self.find_folder()
         emptyfolder={}
