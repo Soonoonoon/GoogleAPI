@@ -97,7 +97,12 @@ Google Mail
         # A2 = def
         # A3 = g
         # A4 = ad
-
+   ## Get all sub sheet
+    sheet.sub # retrun all sub sheet
+   ## Get all properties
+    sheet.getsheet()  # It will be executed when creating sheet or calling sheet
+   ## Get sheet properties
+    sheet.properties  # reutnr color/title/defaultFormat/spreadsheetTheme etc.
    ## Read sheet content
     
     string=sheet.read("A1")                      # return string
